@@ -1,9 +1,18 @@
 export interface User {
-  id: string;
+  sub: string;
   email: string;
+  name: string;
   firstName: string;
   lastName: string;
-  name?: string; // For backward compatibility
+  username: string;
+  emailVerified: boolean;
+  userStatus: string;
+  enabled: boolean;
+  tokenUse: string;
+  scope: string;
+  authTime: number;
+  issuedAt: number;
+  expiresAt: number;
 }
 
 export interface SigninCredentials {
@@ -20,7 +29,7 @@ export interface SignupData {
 
 export interface ConfirmationData {
   email: string;
-  confirmationCode: string; 
+  confirmationCode: string;
 }
 
 export interface ForgotPasswordData {
@@ -28,12 +37,12 @@ export interface ForgotPasswordData {
 }
 
 export interface ConfirmForgotPasswordData {
-  email: string; 
-  confirmationCode: string; 
-  newPassword: string; 
+  email: string;
+  confirmationCode: string;
+  newPassword: string;
 }
 
 export interface AuthResponse {
-  token: string; 
-  user: User; 
+  token: string;
+  user: User;
 }
