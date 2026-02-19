@@ -2,7 +2,6 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import api from "../../services/api";
 
-
 interface User {
   sub: string;
   email: string;
@@ -19,7 +18,6 @@ interface User {
   issuedAt: number;
   expiresAt: number;
 }
-
 
 interface AuthState {
   user: User | null;
@@ -63,11 +61,11 @@ export const signin = createAsyncThunk(
   "auth/signin",
   async (
     credentials: { email: string; password: string },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const response = await api.post("/auth/signin", credentials);
-      const { accessToken, refreshToken } = response.data;
+      const { accessToken, refreshToken, username } = response.data;
 
       // Store both tokens
       if (accessToken && accessToken !== "undefined") {
@@ -81,7 +79,7 @@ export const signin = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Sign in failed");
     }
-  }
+  },
 );
 
 export const signup = createAsyncThunk(
@@ -93,26 +91,26 @@ export const signup = createAsyncThunk(
       firstName: string;
       lastName: string;
     },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
-      await api.post("/auth/signup", userData);
+      const response = await api.post("/auth/signup", userData);
       return { email: userData.email };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Sign up failed");
     }
-  }
+  },
 );
 
 export const confirmSignup = createAsyncThunk(
   "auth/confirmSignup",
   async (
     data: { email: string; confirmationCode: string },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const response = await api.post("/auth/confirm-signup", data);
-      const { accessToken, refreshToken } = response.data;
+      const { accessToken, refreshToken, username } = response.data;
 
       // Store both tokens
       if (accessToken && accessToken !== "undefined") {
@@ -125,10 +123,10 @@ export const confirmSignup = createAsyncThunk(
       return { token: accessToken, user: null };
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || "Confirmation failed"
+        error.response?.data?.message || "Confirmation failed",
       );
     }
-  }
+  },
 );
 
 export const resendConfirmationCode = createAsyncThunk(
@@ -139,10 +137,10 @@ export const resendConfirmationCode = createAsyncThunk(
       return { email };
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to resend code"
+        error.response?.data?.message || "Failed to resend code",
       );
     }
-  }
+  },
 );
 
 export const forgotPassword = createAsyncThunk(
@@ -153,41 +151,44 @@ export const forgotPassword = createAsyncThunk(
       return { email };
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to send reset code"
+        error.response?.data?.message || "Failed to send reset code",
       );
     }
-  }
+  },
 );
 
 export const confirmForgotPassword = createAsyncThunk(
   "auth/confirmForgotPassword",
   async (
     data: { email: string; confirmationCode: string; newPassword: string },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       await api.post("/auth/confirm-forgot-password", data);
       return { success: true };
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || "Password reset failed"
+        error.response?.data?.message || "Password reset failed",
       );
     }
-  }
+  },
 );
 
-export const logout = createAsyncThunk("auth/logout", async () => {
-  try {
-    await api.post("/auth/logout");
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    return { success: true };
-  } catch (error: any) {
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    return { success: true };
-  }
-});
+export const logout = createAsyncThunk(
+  "auth/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      await api.post("/auth/logout");
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      return { success: true };
+    } catch (error: any) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      return { success: true };
+    }
+  },
+);
 
 export const getProfile = createAsyncThunk(
   "auth/getProfile",
@@ -198,10 +199,10 @@ export const getProfile = createAsyncThunk(
     } catch (error: any) {
       // Don't logout on profile fetch failure, just return the error
       return rejectWithValue(
-        error.response?.data?.message || "Failed to get profile"
+        error.response?.data?.message || "Failed to get profile",
       );
     }
-  }
+  },
 );
 
 const authSlice = createSlice({
@@ -227,7 +228,7 @@ const authSlice = createSlice({
         signin.fulfilled,
         (
           state,
-          action: PayloadAction<{ token: string; user: User | null }>
+          action: PayloadAction<{ token: string; user: User | null }>,
         ) => {
           state.loading = false;
           state.isAuthenticated = true;
@@ -238,7 +239,7 @@ const authSlice = createSlice({
           if (action.payload.token && action.payload.token !== "undefined") {
             localStorage.setItem("token", action.payload.token);
           }
-        }
+        },
       )
       .addCase(signin.rejected, (state, action) => {
         state.loading = false;
@@ -255,7 +256,7 @@ const authSlice = createSlice({
           state.loading = false;
           state.needsConfirmation = true;
           state.confirmationEmail = action.payload.email;
-        }
+        },
       )
       .addCase(signup.rejected, (state, action) => {
         state.loading = false;
@@ -270,7 +271,7 @@ const authSlice = createSlice({
         confirmSignup.fulfilled,
         (
           state,
-          action: PayloadAction<{ token: string; user: User | null }>
+          action: PayloadAction<{ token: string; user: User | null }>,
         ) => {
           state.loading = false;
           state.isAuthenticated = true;
@@ -282,7 +283,7 @@ const authSlice = createSlice({
           if (action.payload.token && action.payload.token !== "undefined") {
             localStorage.setItem("token", action.payload.token);
           }
-        }
+        },
       )
       .addCase(confirmSignup.rejected, (state, action) => {
         state.loading = false;
@@ -343,7 +344,11 @@ const authSlice = createSlice({
       })
       .addCase(getProfile.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
       });
   },
 });

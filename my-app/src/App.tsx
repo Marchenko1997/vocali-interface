@@ -12,8 +12,6 @@ import Main from "./pages/Main";
 import Favorites from "./pages/Favorites";
 
 function App() {
- 
-
   return (
     <Provider store={store}>
       <Router>
@@ -38,6 +36,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           {/* Redirect to auth if no route matches */}
           <Route path="*" element={<Navigate to="/auth#login" replace />} />
         </Routes>
