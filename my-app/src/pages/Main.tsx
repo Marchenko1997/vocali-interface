@@ -20,6 +20,7 @@ import type { RootState, AppDispatch } from "../redux/store";
 import Logo from "../components/Logo";
 import RealTimeRecording from "../components/RealTimeRecording";
 import api from "../services/api";
+import { Notify, Confirm } from "notiflix";
 
 interface AudioFile {
   userId: string;
@@ -157,18 +158,42 @@ const Main = () => {
 
       // Refresh the audio files list after successful upload
       await fetchAudioFiles();
+
+      // Show success notification
+      Notify.success("Audio file uploaded successfully!", {
+        position: "center-top",
+        timeout: 3000,
+        clickToClose: true,
+        pauseOnHover: true,
+        borderRadius: "12px",
+        fontFamily: "Inter, system-ui, sans-serif",
+        fontSize: "14px",
+      });
     } catch (error: any) {
       console.error("Upload error:", error.response?.data || error.message);
-      setUploadError(
+      const errorMessage =
         error.response?.data?.message ||
-          error.response?.data?.error ||
-          error.message ||
-          "Upload failed. Please try again.",
-      );
+        error.response?.data?.error ||
+        error.message ||
+        "Upload failed. Please try again.";
+
+      setUploadError(errorMessage);
+
+      // Show error notification
+      Notify.failure(errorMessage, {
+        position: "center-top",
+        timeout: 5000,
+        clickToClose: true,
+        pauseOnHover: true,
+        borderRadius: "12px",
+        fontFamily: "Inter, system-ui, sans-serif",
+        fontSize: "14px",
+      });
     } finally {
       setUploading(false);
     }
-  };
+  }
+
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -221,104 +246,163 @@ const Main = () => {
   };
 
 
-  const handleDeleteAudio = async (fileKey: string, fileName: string) => {
-    // Confirm deletion
-    if (
-      !window.confirm(
-        `Are you sure you want to delete "${fileName}"? This action cannot be undone.`,
-      )
-    ) {
-      return;
-    }
-
-    // Set deleting state for this file
-    setDeletingFiles((prev) => ({ ...prev, [fileKey]: true }));
-
-    try {
-      // Stop audio if it's playing
-      if (playingAudio === fileKey) {
-        const audio = audioElements[fileKey];
-        if (audio) {
-          audio.pause();
-          setPlayingAudio(null);
-        }
-      }
-
-      // Delete the file
-      await api.delete(`/audio/files?fileKey=${encodeURIComponent(fileKey)}`);
-
-      // Remove from local state
-      setAudioFiles((prev) => prev.filter((file) => file.fileKey !== fileKey));
-
-      // Clean up audio element
-      if (audioElements[fileKey]) {
-        audioElements[fileKey].pause();
-        setAudioElements((prev) => {
-          const newElements = { ...prev };
-          delete newElements[fileKey];
-          return newElements;
-        });
-      }
-
-      console.log("Audio file deleted successfully:", fileKey);
-    } catch (error: any) {
-      console.error("Failed to delete audio file:", error);
-      alert(
-        "Failed to delete file: " +
-          (error.response?.data?.message || error.message),
-      );
-    } finally {
-      // Clear deleting state
-      setDeletingFiles((prev) => {
-        const newState = { ...prev };
-        delete newState[fileKey];
-        return newState;
+    const handleDeleteAudio = async (fileKey: string, fileName: string) => {
+      // Confirm deletion with Notiflix
+      const confirmed = await new Promise<boolean>((resolve) => {
+        Confirm.show(
+          "Delete Audio File",
+          `Are you sure you want to delete "${fileName}"? This action cannot be undone.`,
+          "Delete",
+          "Cancel",
+          () => resolve(true),
+          () => resolve(false),
+          {
+            titleColor: "#ef4444",
+            okButtonBackground: "#ef4444",
+            okButtonColor: "#ffffff",
+            cancelButtonBackground: "#6b7280",
+            cancelButtonColor: "#ffffff",
+            borderRadius: "12px",
+            fontFamily: "Inter, system-ui, sans-serif",
+            titleFontSize: "18px",
+            messageFontSize: "14px",
+            buttonsFontSize: "14px",
+            width: "400px",
+          },
+        );
       });
-    }
-  };
 
-  const handleRealTimeTranscriptionComplete = async (
-    transcriptionText: string,
-    audioBlob?: Blob,
-  ) => {
-    try {
-      console.log("Real-time transcription completed:", transcriptionText);
-
-      if (!audioBlob) {
-        console.error("No audio blob available for saving");
+      if (!confirmed) {
         return;
       }
 
-      // Create a FormData object to send the audio file
-      const formData = new FormData();
-      formData.append("file", audioBlob, "recording.wav");
+      // Set deleting state for this file
+      setDeletingFiles((prev) => ({ ...prev, [fileKey]: true }));
 
-      // Add transcription and recording type for real-time recordings
-      formData.append("transcription", transcriptionText);
-      formData.append("recordingType", "real-time");
+      try {
+        // Stop audio if it's playing
+        if (playingAudio === fileKey) {
+          const audio = audioElements[fileKey];
+          if (audio) {
+            audio.pause();
+            setPlayingAudio(null);
+          }
+        }
 
-      // Upload to your API
-      const response = await api.post("/audio/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+        // Delete the file
+        await api.delete(`/audio/files?fileKey=${encodeURIComponent(fileKey)}`);
 
-      console.log("Real-time recording saved successfully:", response.data);
+        // Remove from local state
+        setAudioFiles((prev) =>
+          prev.filter((file) => file.fileKey !== fileKey),
+        );
 
-      // Refresh the audio files list
-      fetchAudioFiles();
+        // Clean up audio element
+        if (audioElements[fileKey]) {
+          audioElements[fileKey].pause();
+          setAudioElements((prev) => {
+            const newElements = { ...prev };
+            delete newElements[fileKey];
+            return newElements;
+          });
+        }
 
-      // Show success message (you could add a toast notification here)
-      alert("Recording saved successfully!");
-    } catch (error: any) {
-      console.error("Failed to save real-time recording:", error);
-      alert(
-        "Failed to save recording: " +
-          (error.response?.data?.message || error.message),
-      );
-    }
-  };
+        console.log("Audio file deleted successfully:", fileKey);
+
+        // Show success notification
+        Notify.success("Audio file deleted successfully!", {
+          position: "center-top",
+          timeout: 3000,
+          clickToClose: true,
+          pauseOnHover: true,
+          borderRadius: "12px",
+          fontFamily: "Inter, system-ui, sans-serif",
+          fontSize: "14px",
+        });
+      } catch (error: any) {
+        console.error("Failed to delete audio file:", error);
+        Notify.failure(
+          "Failed to delete file: " +
+            (error.response?.data?.message || error.message),
+          {
+            position: "center-top",
+            timeout: 5000,
+            clickToClose: true,
+            pauseOnHover: true,
+            borderRadius: "12px",
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontSize: "14px",
+          },
+        );
+      } finally {
+        // Clear deleting state
+        setDeletingFiles((prev) => {
+          const newState = { ...prev };
+          delete newState[fileKey];
+          return newState;
+        });
+      }
+    };
+
+ const handleRealTimeTranscriptionComplete = async (
+   transcriptionText: string,
+   audioBlob?: Blob,
+ ) => {
+   try {
+     console.log("Real-time transcription completed:", transcriptionText);
+
+     if (!audioBlob) {
+       console.error("No audio blob available for saving");
+       return;
+     }
+
+     // Create a FormData object to send the audio file
+     const formData = new FormData();
+     formData.append("file", audioBlob, "recording.wav");
+
+     // Add transcription and recording type for real-time recordings
+     formData.append("transcription", transcriptionText);
+     formData.append("recordingType", "real-time");
+
+     // Upload to your API
+     const response = await api.post("/audio/upload", formData, {
+       headers: {
+         "Content-Type": "multipart/form-data",
+       },
+     });
+
+     console.log("Real-time recording saved successfully:", response.data);
+
+     // Refresh the audio files list
+     fetchAudioFiles();
+
+     // Show success notification
+     Notify.success("Recording saved successfully!", {
+       position: "center-top",
+       timeout: 3000,
+       clickToClose: true,
+       pauseOnHover: true,
+       borderRadius: "12px",
+       fontFamily: "Inter, system-ui, sans-serif",
+       fontSize: "14px",
+     });
+   } catch (error: any) {
+     console.error("Failed to save real-time recording:", error);
+     Notify.failure(
+       "Failed to save recording: " +
+         (error.response?.data?.message || error.message),
+       {
+         position: "center-top",
+         timeout: 5000,
+         clickToClose: true,
+         pauseOnHover: true,
+         borderRadius: "12px",
+         fontFamily: "Inter, system-ui, sans-serif",
+         fontSize: "14px",
+       },
+     );
+   }
+ };
 
   const handleRealTimeError = (error: string) => {
     console.error("Real-time recording error:", error);
