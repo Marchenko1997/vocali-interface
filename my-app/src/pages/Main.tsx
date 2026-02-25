@@ -71,6 +71,7 @@ const Main = () => {
   }>({});
   const [showRealTimeRecording, setShowRealTimeRecording] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showSplash, setShowSplash] = useState(true);
   const [deletingFiles, setDeletingFiles] = useState<{
     [key: string]: boolean;
   }>({});
@@ -192,8 +193,7 @@ const Main = () => {
     } finally {
       setUploading(false);
     }
-  }
-
+  };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -245,164 +245,161 @@ const Main = () => {
     document.body.removeChild(a);
   };
 
+  const handleDeleteAudio = async (fileKey: string, fileName: string) => {
+    // Confirm deletion with Notiflix
+    const confirmed = await new Promise<boolean>((resolve) => {
+      Confirm.show(
+        "Delete Audio File",
+        `Are you sure you want to delete "${fileName}"? This action cannot be undone.`,
+        "Delete",
+        "Cancel",
+        () => resolve(true),
+        () => resolve(false),
+        {
+          titleColor: "#ef4444",
+          okButtonBackground: "#ef4444",
+          okButtonColor: "#ffffff",
+          cancelButtonBackground: "#6b7280",
+          cancelButtonColor: "#ffffff",
+          borderRadius: "12px",
+          fontFamily: "Inter, system-ui, sans-serif",
+          titleFontSize: "18px",
+          messageFontSize: "14px",
+          buttonsFontSize: "14px",
+          width: "400px",
+        },
+      );
+    });
 
-    const handleDeleteAudio = async (fileKey: string, fileName: string) => {
-      // Confirm deletion with Notiflix
-      const confirmed = await new Promise<boolean>((resolve) => {
-        Confirm.show(
-          "Delete Audio File",
-          `Are you sure you want to delete "${fileName}"? This action cannot be undone.`,
-          "Delete",
-          "Cancel",
-          () => resolve(true),
-          () => resolve(false),
-          {
-            titleColor: "#ef4444",
-            okButtonBackground: "#ef4444",
-            okButtonColor: "#ffffff",
-            cancelButtonBackground: "#6b7280",
-            cancelButtonColor: "#ffffff",
-            borderRadius: "12px",
-            fontFamily: "Inter, system-ui, sans-serif",
-            titleFontSize: "18px",
-            messageFontSize: "14px",
-            buttonsFontSize: "14px",
-            width: "400px",
-          },
-        );
-      });
+    if (!confirmed) {
+      return;
+    }
 
-      if (!confirmed) {
-        return;
+    // Set deleting state for this file
+    setDeletingFiles((prev) => ({ ...prev, [fileKey]: true }));
+
+    try {
+      // Stop audio if it's playing
+      if (playingAudio === fileKey) {
+        const audio = audioElements[fileKey];
+        if (audio) {
+          audio.pause();
+          setPlayingAudio(null);
+        }
       }
 
-      // Set deleting state for this file
-      setDeletingFiles((prev) => ({ ...prev, [fileKey]: true }));
+      // Delete the file
+      await api.delete(`/audio/files?fileKey=${encodeURIComponent(fileKey)}`);
 
-      try {
-        // Stop audio if it's playing
-        if (playingAudio === fileKey) {
-          const audio = audioElements[fileKey];
-          if (audio) {
-            audio.pause();
-            setPlayingAudio(null);
-          }
-        }
+      // Remove from local state
+      setAudioFiles((prev) => prev.filter((file) => file.fileKey !== fileKey));
 
-        // Delete the file
-        await api.delete(`/audio/files?fileKey=${encodeURIComponent(fileKey)}`);
+      // Clean up audio element
+      if (audioElements[fileKey]) {
+        audioElements[fileKey].pause();
+        setAudioElements((prev) => {
+          const newElements = { ...prev };
+          delete newElements[fileKey];
+          return newElements;
+        });
+      }
 
-        // Remove from local state
-        setAudioFiles((prev) =>
-          prev.filter((file) => file.fileKey !== fileKey),
-        );
+      console.log("Audio file deleted successfully:", fileKey);
 
-        // Clean up audio element
-        if (audioElements[fileKey]) {
-          audioElements[fileKey].pause();
-          setAudioElements((prev) => {
-            const newElements = { ...prev };
-            delete newElements[fileKey];
-            return newElements;
-          });
-        }
-
-        console.log("Audio file deleted successfully:", fileKey);
-
-        // Show success notification
-        Notify.success("Audio file deleted successfully!", {
+      // Show success notification
+      Notify.success("Audio file deleted successfully!", {
+        position: "center-top",
+        timeout: 3000,
+        clickToClose: true,
+        pauseOnHover: true,
+        borderRadius: "12px",
+        fontFamily: "Inter, system-ui, sans-serif",
+        fontSize: "14px",
+      });
+    } catch (error: any) {
+      console.error("Failed to delete audio file:", error);
+      Notify.failure(
+        "Failed to delete file: " +
+          (error.response?.data?.message || error.message),
+        {
           position: "center-top",
-          timeout: 3000,
+          timeout: 5000,
           clickToClose: true,
           pauseOnHover: true,
           borderRadius: "12px",
           fontFamily: "Inter, system-ui, sans-serif",
           fontSize: "14px",
-        });
-      } catch (error: any) {
-        console.error("Failed to delete audio file:", error);
-        Notify.failure(
-          "Failed to delete file: " +
-            (error.response?.data?.message || error.message),
-          {
-            position: "center-top",
-            timeout: 5000,
-            clickToClose: true,
-            pauseOnHover: true,
-            borderRadius: "12px",
-            fontFamily: "Inter, system-ui, sans-serif",
-            fontSize: "14px",
-          },
-        );
-      } finally {
-        // Clear deleting state
-        setDeletingFiles((prev) => {
-          const newState = { ...prev };
-          delete newState[fileKey];
-          return newState;
-        });
+        },
+      );
+    } finally {
+      // Clear deleting state
+      setDeletingFiles((prev) => {
+        const newState = { ...prev };
+        delete newState[fileKey];
+        return newState;
+      });
+    }
+  };
+
+  const handleRealTimeTranscriptionComplete = async (
+    transcriptionText: string,
+    audioBlob?: Blob,
+  ) => {
+    try {
+      console.log("Real-time transcription completed:", transcriptionText);
+
+      if (!audioBlob) {
+        console.error("No audio blob available for saving");
+        return;
       }
-    };
 
- const handleRealTimeTranscriptionComplete = async (
-   transcriptionText: string,
-   audioBlob?: Blob,
- ) => {
-   try {
-     console.log("Real-time transcription completed:", transcriptionText);
+      // Create a FormData object to send the audio file
+      const formData = new FormData();
+      formData.append("file", audioBlob, "recording.wav");
 
-     if (!audioBlob) {
-       console.error("No audio blob available for saving");
-       return;
-     }
+      // Add transcription and recording type for real-time recordings
+      formData.append("transcription", transcriptionText);
+      formData.append("recordingType", "real-time");
 
-     // Create a FormData object to send the audio file
-     const formData = new FormData();
-     formData.append("file", audioBlob, "recording.wav");
+      // Upload to your API
+      const response = await api.post("/audio/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-     // Add transcription and recording type for real-time recordings
-     formData.append("transcription", transcriptionText);
-     formData.append("recordingType", "real-time");
+      console.log("Real-time recording saved successfully:", response.data);
 
-     // Upload to your API
-     const response = await api.post("/audio/upload", formData, {
-       headers: {
-         "Content-Type": "multipart/form-data",
-       },
-     });
+      // Refresh the audio files list
+      fetchAudioFiles();
 
-     console.log("Real-time recording saved successfully:", response.data);
-
-     // Refresh the audio files list
-     fetchAudioFiles();
-
-     // Show success notification
-     Notify.success("Recording saved successfully!", {
-       position: "center-top",
-       timeout: 3000,
-       clickToClose: true,
-       pauseOnHover: true,
-       borderRadius: "12px",
-       fontFamily: "Inter, system-ui, sans-serif",
-       fontSize: "14px",
-     });
-   } catch (error: any) {
-     console.error("Failed to save real-time recording:", error);
-     Notify.failure(
-       "Failed to save recording: " +
-         (error.response?.data?.message || error.message),
-       {
-         position: "center-top",
-         timeout: 5000,
-         clickToClose: true,
-         pauseOnHover: true,
-         borderRadius: "12px",
-         fontFamily: "Inter, system-ui, sans-serif",
-         fontSize: "14px",
-       },
-     );
-   }
- };
+      // Show success notification
+      Notify.success("Recording saved successfully!", {
+        position: "center-top",
+        timeout: 3000,
+        clickToClose: true,
+        pauseOnHover: true,
+        borderRadius: "12px",
+        fontFamily: "Inter, system-ui, sans-serif",
+        fontSize: "14px",
+      });
+    } catch (error: any) {
+      console.error("Failed to save real-time recording:", error);
+      Notify.failure(
+        "Failed to save recording: " +
+          (error.response?.data?.message || error.message),
+        {
+          position: "center-top",
+          timeout: 5000,
+          clickToClose: true,
+          pauseOnHover: true,
+          borderRadius: "12px",
+          fontFamily: "Inter, system-ui, sans-serif",
+          fontSize: "14px",
+        },
+      );
+    }
+  };
 
   const handleRealTimeError = (error: string) => {
     console.error("Real-time recording error:", error);
@@ -427,6 +424,17 @@ const Main = () => {
       fetchAudioFiles();
     }
   }, [isAuthenticated, token]);
+
+  // Fetch audio files when component mounts
+  useEffect(() => {
+    if (isAuthenticated && token && user) {
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, token, user]);
 
   // Cleanup audio when component unmounts
   useEffect(() => {
@@ -465,6 +473,35 @@ const Main = () => {
         <div className="text-center">
           <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show splash screen if authenticated and splash is active
+  if (showSplash && isAuthenticated && token && user) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <video
+            autoPlay
+            muted
+            loop
+            className="w-64 h-64 mx-auto"
+            style={{ maxWidth: "300px", maxHeight: "300px" }}
+          >
+            <source
+              src="/src/assets/logo-vocali-animated.mp4"
+              type="video/mp4"
+            />
+            Your browser does not support the video tag.
+          </video>
+          <div className="mt-8">
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="text-white text-lg mt-4 font-medium">
+              Welcome to Vocali
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -788,6 +825,6 @@ const Main = () => {
       </main>
     </div>
   );
-};
+};;
 
 export default Main;
