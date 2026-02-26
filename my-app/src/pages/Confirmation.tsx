@@ -18,7 +18,7 @@ const Confirmation = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { loading, error, confirmationEmail } = useSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.auth,
   );
 
   useEffect(() => {
@@ -34,7 +34,7 @@ const Confirmation = () => {
         confirmSignup({
           email: confirmationEmail,
           confirmationCode: formData.confirmationCode,
-        })
+        }),
       );
     }
   };
