@@ -26,7 +26,7 @@ export interface RecordingInterfaceProps {
   setIsPlaying: (playing: boolean) => void;
   accumulatedTranscript: string;
   setAccumulatedTranscript: (text: string) => void;
-  apiKey: string;
+
   websocketRef: React.MutableRefObject<WebSocket | null>;
   recognitionStartedRef: React.MutableRefObject<boolean>;
   audioChunkCountRef: React.MutableRefObject<number>;

@@ -11,6 +11,9 @@ importers:
       '@reduxjs/toolkit':
         specifier: ^2.11.0
         version: 2.11.0(react-redux@9.2.0(@types/react@19.2.7)(react@19.2.0)(redux@5.0.1))(react@19.2.0)
+      '@speechmatics/auth':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@speechmatics/browser-audio-input':
         specifier: ^2.0.3
         version: 2.0.3
@@ -529,6 +532,9 @@ packages:
     resolution: {integrity: sha512-UhTd8u31dXadv0MopwGgNOBpUVROFKWVQgAg5N1ESyCz8AuBcMqm4AuTjrwgQKGDfoFuz02EuMRHQIw/frmYKQ==}
     cpu: [x64]
     os: [win32]
+
+  '@speechmatics/auth@0.1.0':
+    resolution: {integrity: sha512-vF1XOFlAtbNSWYsuJm9WDAZfZIOpwibgqu0sH/Qqkbyz2w/EQyoIhlKta8KRVZ74JeKyY08mnGQ17WDj6i6U4Q==}
 
   '@speechmatics/browser-audio-input@2.0.3':
     resolution: {integrity: sha512-NSfp2D0lg+fimm4FL7hFAEq/W4NEKu+gEoF9L50EwJfldH1xvUR3DVLuA4xi/7U/0j67nRG4tpBv473Rp0gAPQ==}
@@ -1872,6 +1878,8 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.53.3':
     optional: true
+
+  '@speechmatics/auth@0.1.0': {}
 
   '@speechmatics/browser-audio-input@2.0.3':
     dependencies:

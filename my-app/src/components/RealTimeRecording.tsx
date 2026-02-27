@@ -13,6 +13,7 @@ import type {
   RealTimeRecordingProps,
   RecordingInterfaceProps,
 } from "../types/real_time_recording";
+import { createSpeechmaticsJWT } from "@speechmatics/auth";
 
 const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
   onTranscriptionComplete,
@@ -46,8 +47,7 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
   const audioChunksRef = useRef<Blob[]>([]);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
-  // Speechmatics configuration
-  const SPEECHMATICS_API_KEY = import.meta.env.VITE_SPEECHMATICS_API_KEY;
+
 
   const startRecording = async () => {
     try {
@@ -171,7 +171,7 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
 
       // Connect the audio processing chain
       microphoneRef.current.connect(workletNodeRef.current);
-      workletNodeRef.current.connect(audioContextRef.current.destination);
+     
 
       setIsRecording(true);
       setIsConnecting(false);
@@ -323,7 +323,7 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
         onRerecord={handleRerecord}
         setFinalTranscription={setFinalTranscription}
         setIsPlaying={setIsPlaying}
-        apiKey={SPEECHMATICS_API_KEY}
+     
         websocketRef={websocketRef}
         recognitionStartedRef={recognitionStartedRef}
         audioChunkCountRef={audioChunkCountRef}
@@ -356,7 +356,7 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
   onRerecord,
   setFinalTranscription,
   setIsPlaying,
-  apiKey,
+
   websocketRef,
   recognitionStartedRef,
   setTranscription,
@@ -369,21 +369,16 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
     useState(false);
 
   const handleStartRecording = async () => {
-    if (!apiKey) {
-      onError("Speechmatics API key is required for real-time transcription");
-      return;
-    }
+
 
     setIsConnectingToSpeechmatics(true);
     setConnectionStatus("connecting");
 
     try {
-      // Get JWT token from Speechmatics
-      await getSpeechmaticsJWT(apiKey);
+ const jwt = await getSpeechmaticsJWT();
 
-      // Connect to Speechmatics WebSocket
-      const wsUrl = `wss://eu2.rt.speechmatics.com/v2`;
-      const ws = new WebSocket(wsUrl);
+ const wsUrl = `wss://eu2.rt.speechmatics.com/v2?jwt=${jwt}`;
+ const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
         console.log("WebSocket connected to Speechmatics");
@@ -397,7 +392,7 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
             audio_format: {
               type: "raw",
               encoding: "pcm_f32le",
-              sampling_rate: 16000,
+              sample_rate: 16000,
             },
             transcription_config: {
               language: "en",
@@ -410,31 +405,66 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
           }),
         );
 
-        recognitionStartedRef.current = true;
-        onStartRecording();
+     
       };
 
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
+ws.onmessage = (event) => {
+  if (typeof event.data !== "string") {
+    return; // игнорируем бинарные фреймы
+  }
 
-          if (data.metadata?.end_of_transcript) {
-            // Final transcript received
-            if (data.results?.transcript) {
-              const finalText = cleanTranscriptText(data.results.transcript);
-              setFinalTranscription(finalText);
-              setTranscription("");
-            }
-          } else if (data.results?.transcript) {
-            // Partial transcript received
-            const partialText = cleanTranscriptText(data.results.transcript);
-            setTranscription(partialText);
-            setAccumulatedTranscript(partialText);
-          }
-        } catch (error) {
-          console.error("Error parsing WebSocket message:", error);
-        }
-      };
+  const data = JSON.parse(event.data);
+
+  console.log("Speechmatics message:", data);
+
+ if (data.message === "RecognitionStarted") {
+   console.log("Recognition started confirmed");
+
+   recognitionStartedRef.current = true;
+
+  
+   onStartRecording();
+
+   return;
+ }
+
+if (data.message === "AddPartialTranscript") {
+  let text = "";
+
+  for (const result of data.results || []) {
+    const transcript = result.alternatives?.[0]?.transcript;
+    if (transcript) {
+      text += transcript + " ";
+    }
+  }
+
+  setTranscription(text.trim());
+}
+
+if (data.message === "AddTranscript") {
+  let text = "";
+
+  for (const result of data.results || []) {
+    const transcript = result.alternatives?.[0]?.transcript;
+    if (transcript) {
+      text += transcript + " ";
+    }
+  }
+
+  const cleaned = text.trim();
+
+  setAccumulatedTranscript((prev) => prev + " " + cleaned);
+  setFinalTranscription((prev) => prev + " " + cleaned);
+}
+
+  if (data.message === "EndOfTranscript") {
+    console.log("Transcript finished");
+  }
+
+  if (data.message === "Error") {
+    console.error("Speechmatics error:", data);
+  }
+};
 
       ws.onerror = (error) => {
         console.error("WebSocket error:", error);
@@ -462,30 +492,17 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
     onStopRecording();
   };
 
-  const getSpeechmaticsJWT = async (apiKey: string) => {
-    // In a real implementation, you would get this from your backend
-    // For now, we'll use a simple approach (not recommended for production)
-    const response = await fetch("https://asr.api.speechmatics.com/v2/jobs/", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        audio_url: "https://example.com/audio.wav",
-        transcription_config: {
-          language: "en",
-        },
-      }),
-    });
+ const getSpeechmaticsJWT = async () => {
+   const apiKey = import.meta.env.VITE_SPEECHMATICS_API_KEY;
 
-    if (!response.ok) {
-      throw new Error("Failed to get JWT token");
-    }
+   const jwt = await createSpeechmaticsJWT({
+     type: "rt",
+     apiKey,
+     ttl: 60,
+   });
 
-    // This is a simplified approach - in production, you'd get a proper JWT
-    return apiKey;
-  };
+   return jwt;
+ };
 
   const cleanTranscriptText = (text: string) => {
     return text.replace(/\s+/g, " ").trim();

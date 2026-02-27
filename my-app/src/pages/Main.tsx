@@ -185,31 +185,41 @@ const Main = () => {
     fileInputRef.current?.click();
   };
 
-  const handlePlayPause = (fileKey: string, downloadUrl: string) => {
+  const handlePlayPause = async (fileKey: string, downloadUrl: string) => {
     if (playingAudio === fileKey) {
-      // Pause current audio
       const audio = audioElements[fileKey];
       if (audio) {
         audio.pause();
         setPlayingAudio(null);
       }
     } else {
-      // Stop any currently playing audio
       if (playingAudio && audioElements[playingAudio]) {
         audioElements[playingAudio].pause();
       }
 
-      // Play new audio
       let audio = audioElements[fileKey];
+
       if (!audio) {
-        audio = new Audio(downloadUrl);
-        audio.addEventListener("ended", () => {
-          setPlayingAudio(null);
-        });
-        setAudioElements((prev) => ({ ...prev, [fileKey]: audio }));
+        try {
+          const response = await api.get(downloadUrl, {
+            responseType: "blob",
+          });
+
+          const blobUrl = URL.createObjectURL(response.data);
+          audio = new Audio(blobUrl);
+
+          audio.addEventListener("ended", () => {
+            setPlayingAudio(null);
+          });
+
+          setAudioElements((prev) => ({ ...prev, [fileKey]: audio }));
+        } catch (error) {
+          console.error("Failed to load audio:", error);
+          return;
+        }
       }
 
-      audio.play();
+      await audio.play();
       setPlayingAudio(fileKey);
     }
   };

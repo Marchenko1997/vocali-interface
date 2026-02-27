@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.0",
+    "@speechmatics/auth": "^0.1.0",
     "@speechmatics/browser-audio-input": "^2.0.3",
     "@speechmatics/real-time-client": "^8.3.0",
     "@speechmatics/real-time-client-react": "^3.3.0",
