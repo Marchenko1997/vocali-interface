@@ -96,7 +96,8 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
       mediaRecorderRef.current.start();
 
       // Set up audio context and processing
-      audioContextRef.current = new AudioContext({ sampleRate: 16000 });
+     audioContextRef.current = new AudioContext();
+     console.log("Real sample rate:", audioContextRef.current.sampleRate);
       analyserRef.current = audioContextRef.current.createAnalyser();
       microphoneRef.current =
         audioContextRef.current.createMediaStreamSource(stream);
@@ -148,26 +149,29 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
         "audio-processor",
       );
 
-      workletNodeRef.current.port.onmessage = (event) => {
-        if (
-          event.data.audioData &&
-          websocketRef.current &&
-          recognitionStartedRef.current
-        ) {
-          // Check WebSocket state before sending
-          if (websocketRef.current.readyState === WebSocket.OPEN) {
-            const audioData = new Float32Array(event.data.audioData);
-            // Convert Float32Array to binary data for WebSocket
-            const buffer = audioData.buffer;
-            try {
-              websocketRef.current.send(buffer);
-              audioChunkCountRef.current++;
-            } catch (error) {
-              console.warn("Failed to send audio data:", error);
-            }
+    workletNodeRef.current.port.onmessage = (event) => {
+      if (
+        websocketRef.current &&
+        recognitionStartedRef.current &&
+        websocketRef.current.readyState === WebSocket.OPEN
+      ) {
+        try {
+          const float32 = event.data.audioData; 
+
+          const int16 = new Int16Array(float32.length);
+
+          for (let i = 0; i < float32.length; i++) {
+            let s = Math.max(-1, Math.min(1, float32[i]));
+            int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
           }
+
+          websocketRef.current.send(int16.buffer);
+          audioChunkCountRef.current++;
+        } catch (error) {
+          console.warn("Failed to send audio data:", error);
         }
-      };
+      }
+    };
 
       // Connect the audio processing chain
       microphoneRef.current.connect(workletNodeRef.current);
@@ -391,8 +395,8 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
             message: "StartRecognition",
             audio_format: {
               type: "raw",
-              encoding: "pcm_f32le",
-              sample_rate: 16000,
+              encoding: "pcm_s16le",
+              sample_rate: 48000,
             },
             transcription_config: {
               language: "en",
