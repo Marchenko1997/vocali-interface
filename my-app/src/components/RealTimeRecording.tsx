@@ -413,60 +413,44 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
       };
 
 ws.onmessage = (event) => {
-  if (typeof event.data !== "string") {
-    return; // игнорируем бинарные фреймы
-  }
+  if (typeof event.data !== "string") return;
 
   const data = JSON.parse(event.data);
-
   console.log("Speechmatics message:", data);
 
- if (data.message === "RecognitionStarted") {
-   console.log("Recognition started confirmed");
-
-   recognitionStartedRef.current = true;
-
-  
-   onStartRecording();
-
-   return;
- }
-
-if (data.message === "AddPartialTranscript") {
-  let text = "";
-
-  for (const result of data.results || []) {
-    const transcript = result.alternatives?.[0]?.transcript;
-    if (transcript) {
-      text += transcript + " ";
-    }
+ 
+  if (data.message === "RecognitionStarted") {
+    recognitionStartedRef.current = true;
+    onStartRecording();
+    return;
   }
 
-  setTranscription(text.trim());
-}
-
-if (data.message === "AddTranscript") {
-  let text = "";
-
-  for (const result of data.results || []) {
-    const transcript = result.alternatives?.[0]?.transcript;
-    if (transcript) {
-      text += transcript + " ";
-    }
+ 
+  if (data.message === "AddPartialTranscript") {
+    const text = data.metadata?.transcript || "";
+    setTranscription(text);
+    return;
   }
 
-  const cleaned = text.trim();
 
-  setAccumulatedTranscript((prev) => prev + " " + cleaned);
-  setFinalTranscription((prev) => prev + " " + cleaned);
-}
+  if (data.message === "AddTranscript") {
+    const text = data.metadata?.transcript || "";
+
+    setAccumulatedTranscript((prev) => (prev ? prev + " " + text : text));
+
+    setFinalTranscription((prev) => (prev ? prev + " " + text : text));
+
+    return;
+  }
 
   if (data.message === "EndOfTranscript") {
     console.log("Transcript finished");
+    return;
   }
 
   if (data.message === "Error") {
     console.error("Speechmatics error:", data);
+    return;
   }
 };
 
