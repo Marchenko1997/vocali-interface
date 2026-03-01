@@ -145,7 +145,7 @@ const Confirmation = () => {
               className="w-full px-4 py-3 sm:py-4 border-2 border-gray-600 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-400 transition-all duration-200 bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 text-sm sm:text-base text-center tracking-widest"
               placeholder="Enter 6-digit code"
               maxLength={6}
-              pattern="[0-9]{6}"
+              pattern="[A-Za-z0-9]{6}"
             />
           </div>
 

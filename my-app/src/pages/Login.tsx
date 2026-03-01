@@ -183,6 +183,15 @@ const Login = () => {
             </a>
           </p>
         </div>
+        <div className="flex justify-center ">
+          <button
+            type="button"
+            onClick={() => navigate("/auth#forgot")}
+            className="text-xs sm:text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium"
+          >
+            Forgot password?
+          </button>
+        </div>
       </div>
     </div>
   );
