@@ -23,7 +23,7 @@ const ForgotPassword = () => {
     e.preventDefault();
     const result = await dispatch(forgotPassword(email));
     if (forgotPassword.fulfilled.match(result)) {
-      setSent(true);
+       navigate("/auth#reset");
     }
   };
 

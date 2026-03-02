@@ -27,6 +27,7 @@ interface AuthState {
   error: string | null;
   needsConfirmation: boolean;
   confirmationEmail: string | null;
+  resetEmail: string | null;
 }
 
 // Clean up invalid tokens from localStorage
@@ -54,6 +55,7 @@ const initialState: AuthState = {
   error: null,
   needsConfirmation: false,
   confirmationEmail: null,
+  resetEmail: null,
 };
 
 // Async thunks
@@ -306,9 +308,13 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(forgotPassword.fulfilled, (state) => {
-        state.loading = false;
-      })
+      .addCase(
+        forgotPassword.fulfilled,
+        (state, action: PayloadAction<{ email: string }>) => {
+          state.loading = false;
+          state.resetEmail = action.payload.email;
+        },
+      )
       .addCase(forgotPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
@@ -320,6 +326,7 @@ const authSlice = createSlice({
       })
       .addCase(confirmForgotPassword.fulfilled, (state) => {
         state.loading = false;
+        state.resetEmail = null;
       })
       .addCase(confirmForgotPassword.rejected, (state, action) => {
         state.loading = false;

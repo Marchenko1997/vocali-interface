@@ -6,14 +6,15 @@ import Register from './Register'
 import Confirmation from './Confirmation'
 import type { RootState } from '../redux/store'
 import ForgotPassword from './ForgotPassword'
+import ResetPassword from './ResetPassword'
 
 
 
 const Auth = () => {
     const location = useLocation()
-const [currentView, setCurrentView] = useState<"login" | "register" | "forgot">(
-  "login",
-);
+const [currentView, setCurrentView] = useState<
+  "login" | "register" | "forgot" | "reset"
+>("login");
     
     const { needsConfirmation } = useSelector((state: RootState) => state.auth);
 
@@ -21,6 +22,7 @@ const [currentView, setCurrentView] = useState<"login" | "register" | "forgot">(
     const hash = location.hash.replace("#", "");
     if (hash === "register") setCurrentView("register");
     else if (hash === "forgot") setCurrentView("forgot");
+    else if (hash === "reset") setCurrentView("reset");
     else setCurrentView("login");
   }, [location.hash]);
 
@@ -33,6 +35,7 @@ return (
     {currentView === "login" && <Login />}
     {currentView === "register" && <Register />}
     {currentView === "forgot" && <ForgotPassword />}
+    {currentView === "reset" && <ResetPassword />}
   </>
 );
 }
