@@ -1,3 +1,5 @@
+import type { Dispatch, SetStateAction } from "react";
+
 export interface RealTimeRecordingProps {
   onTranscriptionComplete: (text: string, audioBlob?: Blob) => Promise<void>;
   onError: (error: string) => void;
@@ -17,15 +19,15 @@ export interface RecordingInterfaceProps {
   audioUrl: string | null;
   onStartRecording: () => void;
   onStopRecording: () => void;
-  onTranscriptionComplete: (text: string) => Promise<void>;
+  onTranscriptionComplete: (text: string, audioBlob?: Blob) => Promise<void>;
   onError: (error: string) => void;
   onPlayPause: () => void;
   onSave: () => Promise<void>;
   onRerecord: () => void;
-  setFinalTranscription: (text: string) => void;
+  setFinalTranscription: Dispatch<SetStateAction<string>>;
   setIsPlaying: (playing: boolean) => void;
   accumulatedTranscript: string;
-  setAccumulatedTranscript: (text: string) => void;
+  setAccumulatedTranscript: Dispatch<SetStateAction<string>>;
 
   websocketRef: React.MutableRefObject<WebSocket | null>;
   recognitionStartedRef: React.MutableRefObject<boolean>;

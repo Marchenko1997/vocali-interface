@@ -436,9 +436,9 @@ ws.onmessage = (event) => {
   if (data.message === "AddTranscript") {
     const text = data.metadata?.transcript || "";
 
-    setAccumulatedTranscript((prev) => (prev ? prev + " " + text : text));
+  setAccumulatedTranscript((prev: string) => (prev ? prev + " " + text : text));
 
-    setFinalTranscription((prev) => (prev ? prev + " " + text : text));
+  setFinalTranscription((prev: string) => (prev ? prev + " " + text : text));
 
     return;
   }

@@ -1,73 +1,148 @@
-# React + TypeScript + Vite
+# Vocali
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern voice interface platform built with React.js, TypeScript, Tailwind CSS, and Vite.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 19** with TypeScript for type safety
+- **Tailwind CSS v4** for modern, responsive styling
+- **Vite** for fast development and building
+- **Modern UI** with beautiful gradients and animations
+- **Hot Module Replacement (HMR)** for instant updates
+- **Real-time Audio Recording** with live transcription using Speechmatics
+- **Audio File Upload** with transcription processing
+- **User Authentication** with Redux state management
+- **Notifications** with Notiflix
+- **Client-side Routing** with React Router DOM
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: React.js 19
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **Build Tool**: Vite
+- **Package Manager**: pnpm
+- **State Management**: Redux Toolkit + React Redux
+- **Real-time Transcription**: Speechmatics API (`@speechmatics/real-time-client`, `@speechmatics/real-time-client-react`)
+- **Audio Input**: `@speechmatics/browser-audio-input`
+- **HTTP Client**: Axios
+- **Icons**: Lucide React
+- **Notifications**: Notiflix
+- **Routing**: React Router DOM
 
-## Expanding the ESLint configuration
+## 📦 Installation
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd vocali
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2. Install dependencies:
+```bash
+pnpm install
 ```
+
+## 🚀 Development
+
+### Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```bash
+# API Configuration
+VITE_API_BASE_URL=http://localhost:8000/api
+
+# Speechmatics Configuration
+# Get your API key from: https://portal.speechmatics.com/
+VITE_SPEECHMATICS_API_KEY=your_speechmatics_api_key_here
+```
+
+### Start Development Server
+
+Start the development server:
+```bash
+pnpm run dev
+```
+
+The application will be available at `http://localhost:3000`
+
+## 🏗️ Build
+
+Build for production:
+```bash
+pnpm run build
+```
+
+Preview the production build:
+```bash
+pnpm run preview
+```
+
+## 📁 Project Structure
+
+```
+VOCALI-INTERFACE/
+│
+├── my-app/
+│ ├── node_modules/     # Installed dependencies
+│ ├── public/           # Static files
+│ │
+│ ├── src/
+│ │ ├── assets/         # Images, icons and static resources
+│ │ ├── components/     # Reusable React components
+│ │ ├── pages/          # Application pages
+│ │ ├── redux/          # Redux store, slices and state logic
+│ │ ├── services/       # API calls and external services
+│ │ ├── types/          # TypeScript type definitions
+│ │ │
+│ │ ├── App.tsx         # Root React component
+│ │ ├── main.tsx        # Application entry point
+│ │ ├── index.css       # Global styles
+│ │ └── vite-env.d.ts   # Vite TypeScript definitions
+│ │
+│ ├── .env              # Environment variables (not committed)
+│ ├── .env.example      # Example environment variables
+│ ├── .gitignore        # Git ignore rules
+│ │
+│ ├── index.html        # Main HTML template
+│ ├── package.json      # Project dependencies and scripts
+│ ├── pnpm-lock.yaml    # PNPM lock file
+│ │
+│ ├── tailwind.config.js # TailwindCSS configuration
+│ ├── postcss.config.js # PostCSS configuration
+│ ├── eslint.config.js # ESLint configuration
+│ │
+│ ├── tsconfig.json     # TypeScript configuration
+│ ├── tsconfig.app.json
+│ ├── tsconfig.node.json
+│ │
+│ └── vite.config.ts    # Vite configuration
+│
+└── README.md           # Project documentation
+```
+## 🎨 Customization
+
+The project uses Tailwind CSS for styling. You can customize the design by:
+
+1. Modifying `tailwind.config.js` for theme customization
+2. Adding custom components in `src/components/`
+3. Updating the main App component in `src/App.tsx`
+
+## 📝 Available Scripts
+
+- `pnpm run dev` - Start development server
+- `pnpm run build` - Build for production
+- `pnpm run preview` - Preview production build
+- `pnpm run lint` - Run ESLint
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.
