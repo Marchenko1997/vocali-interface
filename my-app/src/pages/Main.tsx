@@ -29,6 +29,7 @@ import type {
   PaginationInfo,
   AudioFilesResponse,
 } from "../types/main_interfaces";
+import logoAnimated from "../assets/logo-vocali-animated.mp4";
 
 const Main = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -516,7 +517,7 @@ const Main = () => {
             className="w-48 h-48 sm:w-64 sm:h-64 mx-auto max-w-[300px] max-h-[300px]"
           >
             <source
-              src="/src/assets/logo-vocali-animated.mp4"
+              src={logoAnimated}
               type="video/mp4"
             />
             Your browser does not support the video tag.
