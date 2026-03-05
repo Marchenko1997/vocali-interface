@@ -1,4 +1,6 @@
 import { useState } from "react";
+import logo from "../assets/logo-vocali.png";
+import logoAnimated from "../assets/logo-vocali-animated.mp4";
 
 interface LogoProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -34,9 +36,9 @@ const Logo: React.FC<LogoProps> = ({
           className="w-full h-full object-contain"
           onEnded={() => setIsHovered(false)}
         >
-          <source src="/src/assets/logo-vocali-animated.mp4" type="video/mp4" />
+          <source src={logoAnimated} type="video/mp4" />
           <img
-            src="/src/assets/logo-vocali.png"
+            src={logo}
             alt="Vocali"
             className="w-full h-full object-contain"
           />
@@ -51,11 +53,7 @@ const Logo: React.FC<LogoProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <img
-        src="/src/assets/logo-vocali.png"
-        alt="Vocali"
-        className="w-full h-full object-contain"
-      />
+      <img src={logo} alt="Vocali" className="w-full h-full object-contain" />
     </div>
   );
 };
