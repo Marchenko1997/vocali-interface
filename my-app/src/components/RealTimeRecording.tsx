@@ -492,9 +492,6 @@ ws.onmessage = (event) => {
    return jwt;
  };
 
-  const cleanTranscriptText = (text: string) => {
-    return text.replace(/\s+/g, " ").trim();
-  };
 
   const handleSave = async () => {
     await onSave();

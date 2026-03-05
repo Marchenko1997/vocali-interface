@@ -8,7 +8,7 @@ import Logo from "../components/Logo";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const [sent] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();

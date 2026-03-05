@@ -67,7 +67,7 @@ export const signin = createAsyncThunk(
   ) => {
     try {
       const response = await api.post("/auth/signin", credentials);
-      const { accessToken, refreshToken, username } = response.data;
+      const { accessToken, refreshToken } = response.data;
 
       // Store both tokens
       if (accessToken && accessToken !== "undefined") {
@@ -96,7 +96,7 @@ export const signup = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      const response = await api.post("/auth/signup", userData);
+      await api.post("/auth/signup", userData);
       return { email: userData.email };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Sign up failed");
@@ -112,7 +112,7 @@ export const confirmSignup = createAsyncThunk(
   ) => {
     try {
       const response = await api.post("/auth/confirm-signup", data);
-      const { accessToken, refreshToken, username } = response.data;
+      const { accessToken, refreshToken } = response.data;
 
       // Store both tokens
       if (accessToken && accessToken !== "undefined") {
@@ -176,21 +176,18 @@ export const confirmForgotPassword = createAsyncThunk(
   },
 );
 
-export const logout = createAsyncThunk(
-  "auth/logout",
-  async (_, { rejectWithValue }) => {
-    try {
-      await api.post("/auth/logout");
-      localStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
-      return { success: true };
-    } catch (error: any) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
-      return { success: true };
-    }
-  },
-);
+export const logout = createAsyncThunk("auth/logout", async () => {
+  try {
+    await api.post("/auth/logout");
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    return { success: true };
+  } catch (error: any) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    return { success: true };
+  }
+});
 
 export const getProfile = createAsyncThunk(
   "auth/getProfile",
@@ -349,7 +346,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload;
       })
-      .addCase(getProfile.rejected, (state, action) => {
+      .addCase(getProfile.rejected, (state) => {
         state.loading = false;
         state.user = null;
         state.token = null;
