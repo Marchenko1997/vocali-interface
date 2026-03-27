@@ -8,7 +8,6 @@ import {
   Loader2,
   Upload,
   AlertCircle,
-  Play,
   FileAudio,
   Download,
   FileText,
