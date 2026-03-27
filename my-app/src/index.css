@@ -296,3 +296,24 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+@keyframes waveformPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0px rgba(168, 85, 247, 0.0);
+  }
+  50% {
+    transform: scale(1.015);
+    box-shadow: 0 0 12px rgba(236, 72, 153, 0.35);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0px rgba(168, 85, 247, 0.0);
+  }
+}
+
+
+.waveform-playing {
+  animation: waveformPulse 1.2s ease-in-out infinite;
+  border-radius: 8px;
+}

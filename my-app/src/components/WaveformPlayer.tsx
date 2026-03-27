@@ -21,7 +21,8 @@ const WaveformPlayer = ({
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const [playbackRate, setPlaybackRate] = useState(1);
 
   const formatTime = (t: number) => {
     if (!t || isNaN(t)) return "0:00";
@@ -31,7 +32,22 @@ const WaveformPlayer = ({
     const seconds = totalSeconds % 60;
 
     return `${minutes}:${String(seconds).padStart(2, "0")}`;
-  };
+    };
+    
+    const toggleSpeed = () => {
+      let nextRate = 1;
+
+      if (playbackRate === 1) nextRate = 1.5;
+      else if (playbackRate === 1.5) nextRate = 2;
+      else nextRate = 1;
+
+      setPlaybackRate(nextRate);
+
+      if (wavesurferRef.current) {
+        wavesurferRef.current.setPlaybackRate(nextRate);
+      }
+    };
+
 
   useEffect(() => {
     if (!waveformRef.current) return;
@@ -84,7 +100,8 @@ const WaveformPlayer = ({
         ws.load(blobUrl);
 
         ws.on("ready", () => {
-          if (!isCancelled) setDuration(ws.getDuration());
+            if (!isCancelled) setDuration(ws.getDuration());
+            ws.setPlaybackRate(playbackRate);
         });
 
        
@@ -101,19 +118,24 @@ const WaveformPlayer = ({
           setCurrentTime(Math.floor(ws.getCurrentTime()));
         });
 
-        ws.on("play", () => {
-          waveformRef.current?.classList.add("scale-[1.01]");
+          ws.on("play", () => {
+          setTimeout(() => setIsPlaying(true), 150);
+            waveformRef.current?.classList.add("scale-[1.01]");
+            waveformRef.current?.classList.add("waveform-playing");
         });
 
-        ws.on("pause", () => {
-          waveformRef.current?.classList.remove("scale-[1.01]");
+          ws.on("pause", () => {
+              setIsPlaying(false);
+             waveformRef.current?.classList.remove("scale-[1.01]");
+           waveformRef.current?.classList.remove("waveform-playing");
         });
 
         ws.on("finish", () => {
           if (!isCancelled) {
             setIsPlaying(false);
             setCurrentTime(0);
-            setActiveAudio(null);
+              setActiveAudio(null);
+              waveformRef.current?.classList.remove("waveform-playing");
           }
         });
 
@@ -134,7 +156,8 @@ const WaveformPlayer = ({
   useEffect(() => {
     if (activeAudio !== audioId && wavesurferRef.current) {
       wavesurferRef.current.pause();
-      setIsPlaying(false);
+        setIsPlaying(false);
+        waveformRef.current?.classList.remove("waveform-playing");
     }
   }, [activeAudio, audioId]);
 
@@ -154,8 +177,9 @@ const WaveformPlayer = ({
       wavesurferRef.current.play();
       setIsPlaying(true);
     }
-  };
-
+    };
+    
+    
   return (
     <div className="flex items-center gap-4">
       {/* waveform */}
@@ -168,6 +192,15 @@ const WaveformPlayer = ({
       <div className="text-xs text-gray-500 whitespace-nowrap">
         {formatTime(currentTime)} : {formatTime(duration)}
       </div>
+
+      {isPlaying && (
+        <button
+          onClick={toggleSpeed}
+          className="text-xs font-semibold px-2 py-1 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition"
+        >
+          {playbackRate}x
+        </button>
+      )}
 
       {/* button */}
       <button
