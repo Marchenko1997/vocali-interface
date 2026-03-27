@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
 import { Play } from "lucide-react";
-import api from "../services/api"; // 🔥 используем твой axios
+import api from "../services/api";
 
 type Props = {
   audioUrl: string;
@@ -26,12 +26,7 @@ const WaveformPlayer = ({
   const formatTime = (t: number) => {
     if (!t || isNaN(t)) return "0:00";
 
-    if (t > 10000) {
-      t = t / 1000;
-    }
-
     const totalSeconds = Math.floor(t);
-
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
 
@@ -56,13 +51,34 @@ const WaveformPlayer = ({
 
         const blobUrl = URL.createObjectURL(response.data);
 
+        
+        const ctx = document.createElement("canvas").getContext("2d")!;
+        const gradient = ctx.createLinearGradient(0, 0, 300, 0);
+        gradient.addColorStop(0, "#a855f7"); 
+        gradient.addColorStop(1, "#ec4899"); 
+
         ws = WaveSurfer.create({
           container: waveformRef.current!,
-          waveColor: "#cbd5f5",
-          progressColor: "#4ade80",
+
+          
+          waveColor: "#e5e7eb",
+          progressColor: gradient,
+
           height: 60,
-          barWidth: 2,
-          cursorWidth: 1,
+
+        
+          barWidth: 3,
+          barGap: 2,
+          barRadius: 3,
+
+       
+          cursorWidth: 2,
+          cursorColor: "#ba22c5",
+
+          normalize: true,
+
+          
+          autoCenter: true,
         });
 
         ws.load(blobUrl);
@@ -71,18 +87,28 @@ const WaveformPlayer = ({
           if (!isCancelled) setDuration(ws.getDuration());
         });
 
+       
         ws.on("audioprocess", () => {
           const time = Math.floor(ws.getCurrentTime());
 
           if (!isCancelled) {
-            setCurrentTime((prev) => {
-              if (prev !== time) {
-                return time;
-              }
-              return prev;
-            });
+            setCurrentTime((prev) => (prev !== time ? time : prev));
           }
         });
+
+        
+        ws.on("interaction", () => {
+          setCurrentTime(Math.floor(ws.getCurrentTime()));
+        });
+
+        ws.on("play", () => {
+          waveformRef.current?.classList.add("scale-[1.01]");
+        });
+
+        ws.on("pause", () => {
+          waveformRef.current?.classList.remove("scale-[1.01]");
+        });
+
         ws.on("finish", () => {
           if (!isCancelled) {
             setIsPlaying(false);
@@ -101,7 +127,6 @@ const WaveformPlayer = ({
 
     return () => {
       isCancelled = true;
-
       if (ws) ws.destroy();
     };
   }, [audioUrl]);
@@ -121,11 +146,7 @@ const WaveformPlayer = ({
 
       setIsPlaying((prev) => {
         const next = !prev;
-
-        if (!next) {
-          setActiveAudio(null);
-        }
-
+        if (!next) setActiveAudio(null);
         return next;
       });
     } else {
@@ -137,12 +158,18 @@ const WaveformPlayer = ({
 
   return (
     <div className="flex items-center gap-4">
-      <div ref={waveformRef} className="flex-1 min-w-[200px]" />
+      {/* waveform */}
+      <div
+        ref={waveformRef}
+        className="flex-1 min-w-[200px] transition-transform duration-200"
+      />
 
+      {/* time */}
       <div className="text-xs text-gray-500 whitespace-nowrap">
         {formatTime(currentTime)} : {formatTime(duration)}
       </div>
 
+      {/* button */}
       <button
         onClick={togglePlay}
         className={`p-2 sm:p-3 transition-all duration-200 rounded-lg flex items-center justify-center ${
