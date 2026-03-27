@@ -30,6 +30,7 @@ import type {
   AudioFilesResponse,
 } from "../types/main_interfaces";
 import logoAnimated from "../assets/logo-vocali-animated.mp4";
+import WaveformPlayer from "../components/WaveformPlayer";
 
 const Main = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -42,10 +43,7 @@ const Main = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
-  const [playingAudio, setPlayingAudio] = useState<string | null>(null);
-  const [audioElements, setAudioElements] = useState<{
-    [key: string]: HTMLAudioElement;
-  }>({});
+
   const [showRealTimeRecording, setShowRealTimeRecording] = useState(false);
   const [savingRealTimeRecording, setSavingRealTimeRecording] = useState(false);
   const [deletingFiles, setDeletingFiles] = useState<{
@@ -54,6 +52,7 @@ const Main = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeAudio, setActiveAudio] = useState<string | null>(null);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -186,45 +185,6 @@ const Main = () => {
     fileInputRef.current?.click();
   };
 
-  const handlePlayPause = async (fileKey: string, downloadUrl: string) => {
-    if (playingAudio === fileKey) {
-      const audio = audioElements[fileKey];
-      if (audio) {
-        audio.pause();
-        setPlayingAudio(null);
-      }
-    } else {
-      if (playingAudio && audioElements[playingAudio]) {
-        audioElements[playingAudio].pause();
-      }
-
-      let audio = audioElements[fileKey];
-
-      if (!audio) {
-        try {
-          const response = await api.get(downloadUrl, {
-            responseType: "blob",
-          });
-
-          const blobUrl = URL.createObjectURL(response.data);
-          audio = new Audio(blobUrl);
-
-          audio.addEventListener("ended", () => {
-            setPlayingAudio(null);
-          });
-
-          setAudioElements((prev) => ({ ...prev, [fileKey]: audio }));
-        } catch (error) {
-          console.error("Failed to load audio:", error);
-          return;
-        }
-      }
-
-      await audio.play();
-      setPlayingAudio(fileKey);
-    }
-  };
-
   const handleDownloadText = (fileName: string, transcriptionText: string) => {
     // Create a blob with the transcription text
     const blob = new Blob([transcriptionText], { type: "text/plain" });
@@ -276,15 +236,6 @@ const Main = () => {
     setDeletingFiles((prev) => ({ ...prev, [fileKey]: true }));
 
     try {
-      // Stop audio if it's playing
-      if (playingAudio === fileKey) {
-        const audio = audioElements[fileKey];
-        if (audio) {
-          audio.pause();
-          setPlayingAudio(null);
-        }
-      }
-
       // Delete the file
       await api.delete(`/audio/files?fileKey=${encodeURIComponent(fileKey)}`);
 
@@ -296,16 +247,6 @@ const Main = () => {
       } else {
         // Refresh the audio files list to get updated data
         await fetchAudioFiles(currentPage);
-      }
-
-      // Clean up audio element
-      if (audioElements[fileKey]) {
-        audioElements[fileKey].pause();
-        setAudioElements((prev) => {
-          const newElements = { ...prev };
-          delete newElements[fileKey];
-          return newElements;
-        });
       }
 
       console.log("Audio file deleted successfully:", fileKey);
@@ -460,20 +401,6 @@ const Main = () => {
     }
   }, [isAuthenticated, token, user]);
 
-  // Cleanup audio when component unmounts
-  useEffect(() => {
-    return () => {
-      // Stop all audio when component unmounts
-      Object.values(audioElements).forEach((audio) => {
-        audio.pause();
-        audio.currentTime = 0;
-      });
-    };
-  }, [audioElements]);
-
-
-  
-
   // Show loading while fetching profile (only if we're authenticated and have a token)
   if (
     loading &&
@@ -516,10 +443,7 @@ const Main = () => {
             loop
             className="w-48 h-48 sm:w-64 sm:h-64 mx-auto max-w-[300px] max-h-[300px]"
           >
-            <source
-              src={logoAnimated}
-              type="video/mp4"
-            />
+            <source src={logoAnimated} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
           <div className="mt-8">
@@ -846,31 +770,13 @@ const Main = () => {
                               )}
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2 sm:space-x-3">
-                          <button
-                            onClick={() =>
-                              handlePlayPause(file.fileKey, file.downloadUrl)
-                            }
-                            className={`p-2 sm:p-3 transition-all duration-200 rounded-lg flex items-center justify-center ${
-                              playingAudio === file.fileKey
-                                ? "bg-red-500 hover:bg-red-600 text-white shadow-lg"
-                                : "text-gray-600 hover:text-green-600 hover:bg-green-50"
-                            }`}
-                            title={
-                              playingAudio === file.fileKey ? "Pause" : "Play"
-                            }
-                          >
-                            {playingAudio === file.fileKey ? (
-                              <div className="h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
-                                <div className="flex space-x-1">
-                                  <div className="w-1 h-3 sm:h-4 bg-white rounded-sm"></div>
-                                  <div className="w-1 h-3 sm:h-4 bg-white rounded-sm"></div>
-                                </div>
-                              </div>
-                            ) : (
-                              <Play className="h-4 w-4 sm:h-5 sm:w-5" />
-                            )}
-                          </button>
+                        <div className="flex items-center space-x-0 sm:space-x-3">
+                          <WaveformPlayer
+                            audioUrl={file.downloadUrl}
+                            audioId={file.fileKey}
+                            activeAudio={activeAudio}
+                            setActiveAudio={setActiveAudio}
+                          />
 
                           <button
                             onClick={() =>
