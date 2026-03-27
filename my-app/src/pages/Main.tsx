@@ -769,7 +769,7 @@ const Main = () => {
                               )}
                           </div>
                         </div>
-                        <div className="flex items-center space-x-0 sm:space-x-3">
+                        <div className="flex  items-center space-x-0 sm:space-x-3">
                           <WaveformPlayer
                             audioUrl={file.downloadUrl}
                             audioId={file.fileKey}
@@ -785,11 +785,16 @@ const Main = () => {
                               )
                             }
                             disabled={deletingFiles[file.fileKey]}
-                            className={`p-2 sm:p-3 transition-all duration-200 rounded-lg flex items-center justify-center ${
-                              deletingFiles[file.fileKey]
-                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                : "text-gray-600 hover:text-red-600 hover:bg-red-50"
-                            }`}
+                            className={`
+    p-2 sm:p-3 transition-all duration-200 rounded-lg flex items-center justify-center
+    focus:outline-none md:focus:outline
+    focus:ring-0 md:focus:ring-2
+    ${
+      deletingFiles[file.fileKey]
+        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+        : "text-gray-600 hover:text-red-600 hover:bg-red-50"
+    }
+  `}
                             title="Delete audio file"
                           >
                             {deletingFiles[file.fileKey] ? (

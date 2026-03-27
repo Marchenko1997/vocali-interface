@@ -192,37 +192,38 @@ const WaveformPlayer = ({
       <div className="text-xs text-gray-500 whitespace-nowrap">
         {formatTime(currentTime)} : {formatTime(duration)}
       </div>
-
-      {isPlaying && (
-        <button
-          onClick={toggleSpeed}
-          className="text-xs font-semibold px-2 py-1 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition"
-        >
-          {playbackRate}x
-        </button>
-      )}
-
-      {/* button */}
-      <button
-        onClick={togglePlay}
-        className={`p-2 sm:p-3 transition-all duration-200 rounded-lg flex items-center justify-center ${
-          isPlaying
-            ? "bg-red-500 hover:bg-red-600 text-white shadow-lg"
-            : "text-gray-600 hover:text-green-600 hover:bg-green-50"
-        }`}
-        title={isPlaying ? "Pause" : "Play"}
-      >
-        {isPlaying ? (
-          <div className="h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
-            <div className="flex space-x-1">
-              <div className="w-1 h-3 sm:h-4 bg-white rounded-sm"></div>
-              <div className="w-1 h-3 sm:h-4 bg-white rounded-sm"></div>
-            </div>
-          </div>
-        ) : (
-          <Play className="h-4 w-4 sm:h-5 sm:w-5" />
+      <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4">
+        {isPlaying && (
+          <button
+            onClick={toggleSpeed}
+            className="text-xs font-semibold px-2 py-1 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition"
+          >
+            {playbackRate}x
+          </button>
         )}
-      </button>
+
+        {/* button */}
+        <button
+          onClick={togglePlay}
+          className={`p-2 sm:p-3 transition-all duration-200 rounded-lg flex items-center justify-center ${
+            isPlaying
+              ? "bg-red-500 hover:bg-red-600 text-white shadow-lg"
+              : "text-gray-600 hover:text-green-600 hover:bg-green-50"
+          }`}
+          title={isPlaying ? "Pause" : "Play"}
+        >
+          {isPlaying ? (
+            <div className="h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
+              <div className="flex space-x-1">
+                <div className="w-1 h-3 sm:h-4 bg-white rounded-sm"></div>
+                <div className="w-1 h-3 sm:h-4 bg-white rounded-sm"></div>
+              </div>
+            </div>
+          ) : (
+            <Play className="h-4 w-4 sm:h-5 sm:w-5" />
+          )}
+        </button>
+      </div>
     </div>
   );
 };
