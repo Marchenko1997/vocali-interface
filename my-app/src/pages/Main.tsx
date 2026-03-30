@@ -15,6 +15,7 @@ import {
   Trash2,
   Menu,
   X,
+  Headphones,
 } from "lucide-react";
 import { Notify, Confirm } from "notiflix";
 import { logout, getProfile } from "../redux/slices/authSlice";
@@ -645,6 +646,39 @@ const Main = () => {
                 <span>
                   {showRealTimeRecording ? "Hide Recorder" : "Start Recording"}
                 </span>
+              </button>
+            </div>
+            {/* Musicc Control Card */}
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow">
+              <div className="flex items-start space-x-3 sm:space-x-4">
+                <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-full flex-shrink-0">
+                  <Headphones className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
+                    Music Control
+                  </h3>
+                  <p className="text-gray-600 mb-3 text-xs sm:text-sm">
+                    Control Spotify with your voice
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleUploadClick}
+                disabled={uploading}
+                className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg hover:from-emerald-600 hover:to-green-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px]"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Proccessing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Headphones className="h-4 w-4" />
+                    <span>Start Voice Music</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
