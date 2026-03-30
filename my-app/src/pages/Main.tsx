@@ -31,6 +31,7 @@ import type {
 } from "../types/main_interfaces";
 import logoAnimated from "../assets/logo-vocali-animated.mp4";
 import WaveformPlayer from "../components/WaveformPlayer";
+import { searchSpotify } from "../services/spotify";
 
 const Main = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -64,6 +65,12 @@ const Main = () => {
     hasNextPage: false,
     hasPreviousPage: false,
   });
+
+  // Spotify search state
+  const [spotifyQuery, setSpotifyQuery] = useState("");
+  const [spotifyResults, setSpotifyResults] = useState<any[]>([]);
+  const [loadingSpotify, setLoadingSpotify] = useState(false);
+  const [showSpotify, setShowSpotify] = useState(false);
 
   useEffect(() => {
     // Only fetch profile if we have a valid token but no user data and haven't fetched yet
@@ -401,6 +408,22 @@ const Main = () => {
     }
   }, [isAuthenticated, token, user]);
 
+  // Handle Spotify search
+  const handleSpotifySearch = async () => {
+    if (!spotifyQuery) return;
+
+    setLoadingSpotify(true);
+
+    try {
+      const res = await searchSpotify(spotifyQuery);
+      setSpotifyResults(res.tracks.items);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingSpotify(false);
+    }
+  };
+
   // Show loading while fetching profile (only if we're authenticated and have a token)
   if (
     loading &&
@@ -664,24 +687,60 @@ const Main = () => {
                 </div>
               </div>
               <button
-                onClick={handleUploadClick}
-                disabled={uploading}
-                className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg hover:from-emerald-600 hover:to-green-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px]"
+                onClick={() => setShowSpotify(!showSpotify)}
+                className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg hover:from-emerald-600 hover:to-green-700 transition-all duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px]"
               >
-                {uploading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Proccessing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Headphones className="h-4 w-4" />
-                    <span>Start Voice Music</span>
-                  </>
-                )}
+                <Headphones className="h-4 w-4" />
+                <span>
+                  {showSpotify ? "Stop Spotify Music" : "Start Spotify Music"}
+                </span>
               </button>
             </div>
           </div>
+         {/* Spotify Card */}
+          {showSpotify && (
+            <div className="max-w-2xl mx-auto">
+              <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 space-y-4">
+                {/* input */}
+                <input
+                  value={spotifyQuery}
+                  onChange={(e) => setSpotifyQuery(e.target.value)}
+                  placeholder="Search music..."
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+
+                {/* кнопка поиска */}
+                <button
+                  onClick={handleSpotifySearch}
+                  className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition"
+                >
+                  Search
+                </button>
+
+                {/* loading */}
+                {loadingSpotify && (
+                  <div className="flex justify-center">
+                    <Loader2 className="animate-spin" />
+                  </div>
+                )}
+
+                {/* результаты */}
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {spotifyResults.map((track) => (
+                    <div
+                      key={track.id}
+                      className="p-3 border rounded-lg hover:bg-gray-50 transition"
+                    >
+                      <p className="font-semibold">{track.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {track.artists.map((a: any) => a.name).join(", ")}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Real-Time Recording Interface */}
           {showRealTimeRecording && (
