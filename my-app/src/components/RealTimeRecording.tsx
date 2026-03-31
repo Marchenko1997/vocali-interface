@@ -566,7 +566,8 @@ ws.onmessage = (event) => {
           <button
             onClick={handleStartRecording}
             disabled={isConnectingToSpeechmatics}
-            className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] min-w-[120px] justify-center"
+            className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-xl hover:scale-[1.01]
+    active:scale-[0.99] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-12 min-w-[120px] justify-center"
           >
             {isConnectingToSpeechmatics ? (
               <>
@@ -583,7 +584,8 @@ ws.onmessage = (event) => {
         ) : (
           <button
             onClick={handleStopRecording}
-            className="flex items-center space-x-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 min-h-[48px] min-w-[120px] justify-center"
+            className="flex items-center space-x-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-xl hover:scale-[1.01]
+    active:scale-[0.99] transition-all duration-200 min-h-12 min-w-[120px] justify-center"
           >
             <Square className="h-5 w-5" />
             <span>Stop Recording</span>

@@ -16,6 +16,8 @@ import {
   Menu,
   X,
   Headphones,
+  Music,
+  Search,
 } from "lucide-react";
 import { Notify, Confirm } from "notiflix";
 import { logout, getProfile } from "../redux/slices/authSlice";
@@ -71,6 +73,9 @@ const Main = () => {
   const [spotifyResults, setSpotifyResults] = useState<any[]>([]);
   const [loadingSpotify, setLoadingSpotify] = useState(false);
   const [showSpotify, setShowSpotify] = useState(false);
+
+  const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
+  const [playerSrc, setPlayerSrc] = useState("");
 
   useEffect(() => {
     // Only fetch profile if we have a valid token but no user data and haven't fetched yet
@@ -424,6 +429,16 @@ const Main = () => {
     }
   };
 
+  useEffect(() => {
+    if (!selectedTrack) return;
+
+    const timeout = setTimeout(() => {
+      setPlayerSrc(`https://open.spotify.com/embed/track/${selectedTrack.id}`);
+    }, 150);
+
+    return () => clearTimeout(timeout);
+  }, [selectedTrack]);
+
   // Show loading while fetching profile (only if we're authenticated and have a token)
   if (
     loading &&
@@ -608,7 +623,9 @@ const Main = () => {
                 <button
                   onClick={handleUploadClick}
                   disabled={uploading}
-                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px]"
+                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-2 sm:py-3 px-4  hover:scale-[1.01]
+    active:scale-[0.99]
+    transition-all duration-200 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px]"
                 >
                   {uploading ? (
                     <>
@@ -663,10 +680,11 @@ const Main = () => {
 
               <button
                 onClick={() => setShowRealTimeRecording(!showRealTimeRecording)}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px]"
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg hover:scale-[1.01]
+    active:scale-[0.99] transition-all duration-200 hover:from-purple-600 hover:to-pink-700  flex items-center justify-center space-x-2 text-sm sm:text-base min-h-11"
               >
                 <Mic className="h-4 w-4" />
-                <span>
+                <span className="">
                   {showRealTimeRecording ? "Hide Recorder" : "Start Recording"}
                 </span>
               </button>
@@ -688,7 +706,9 @@ const Main = () => {
               </div>
               <button
                 onClick={() => setShowSpotify(!showSpotify)}
-                className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg hover:from-emerald-600 hover:to-green-700 transition-all duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px]"
+                className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg  hover:scale-[1.01]
+    active:scale-[0.99]
+    transition-all duration-200 hover:from-emerald-600 hover:to-green-700 transition-all duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px]"
               >
                 <Headphones className="h-4 w-4" />
                 <span>
@@ -697,46 +717,124 @@ const Main = () => {
               </button>
             </div>
           </div>
-         {/* Spotify Card */}
+          {/* Spotify Card */}
           {showSpotify && (
             <div className="max-w-2xl mx-auto">
-              <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 space-y-4">
-                {/* input */}
-                <input
-                  value={spotifyQuery}
-                  onChange={(e) => setSpotifyQuery(e.target.value)}
-                  placeholder="Search music..."
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
+              <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+                <div className="space-y-4">
+                  {/* input */}
+                  <div className="relative">
+                    <input
+                      value={spotifyQuery}
+                      onChange={(e) => setSpotifyQuery(e.target.value)}
+                      placeholder="Search music..."
+                      className="
+        w-full pl-11 pr-4 py-3
+        rounded-xl border border-gray-200
+        bg-gray-50
+        focus:bg-white focus:border-green-400
+        focus:ring-2 focus:ring-green-100
+        outline-none
+        text-sm text-gray-700
+        placeholder:text-gray-400
+        transition-all duration-200
+      "
+                    />
 
-                {/* кнопка поиска */}
-                <button
-                  onClick={handleSpotifySearch}
-                  className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition"
-                >
-                  Search
-                </button>
-
-                {/* loading */}
-                {loadingSpotify && (
-                  <div className="flex justify-center">
-                    <Loader2 className="animate-spin" />
+                    {/* icon inside input */}
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                      <Music className="w-4 h-4" />
+                    </div>
                   </div>
-                )}
+
+                  {/* button */}
+                  <button
+                    onClick={handleSpotifySearch}
+                    className="
+    w-full
+    bg-gradient-to-r from-green-500 to-emerald-600
+    text-white font-semibold
+    py-3 rounded-xl
+    shadow-md
+    hover:shadow-lg
+    hover:scale-[1.01]
+    active:scale-[0.99]
+    transition-all duration-200
+    flex items-center justify-center gap-2
+  "
+                  >
+                    <Search className="w-4 h-4" />
+                    Search Music
+                  </button>
+                </div>
 
                 {/* результаты */}
-                <div className="space-y-3 max-h-60 overflow-y-auto">
-                  {spotifyResults.map((track) => (
-                    <div
-                      key={track.id}
-                      className="p-3 border rounded-lg hover:bg-gray-50 transition"
-                    >
-                      <p className="font-semibold">{track.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {track.artists.map((a: any) => a.name).join(", ")}
-                      </p>
-                    </div>
-                  ))}
+                {loadingSpotify ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="animate-spin text-gray-400" />
+                  </div>
+                ) : spotifyResults.length > 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1.5  mt-4 custom-scroll">
+                    {spotifyResults.map((track) => {
+                      const isActive = selectedTrack?.id === track.id;
+
+                      return (
+                        <div
+                          key={track.id}
+                          onClick={() => setSelectedTrack(track)}
+                          className={`
+            flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200
+            ${
+              isActive
+                ? "bg-green-50 border border-green-300"
+                : "bg-gray-50 hover:bg-gray-100 border border-transparent"
+            }
+          `}
+                        >
+                          <img
+                            src={track.album.images?.[2]?.url}
+                            alt={track.name}
+                            className="w-12 h-12 rounded-md object-cover"
+                          />
+
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-800 truncate">
+                              {track.name}
+                            </p>
+                            <p className="text-sm text-gray-500 truncate">
+                              {track.artists.map((a: any) => a.name).join(", ")}
+                            </p>
+                          </div>
+
+                          <div className="text-xs text-gray-400">
+                            {Math.floor(track.duration_ms / 60000)}:
+                            {Math.floor((track.duration_ms % 60000) / 1000)
+                              .toString()
+                              .padStart(2, "0")}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : spotifyQuery ? (
+                  <p className="text-center text-sm text-gray-400 pt-4">
+                    No tracks found
+                  </p>
+                ) : null}
+                <div
+                  className={`
+    transition-all duration-300
+    ${playerSrc ? "mt-4 h-[80px] opacity-100" : "h-0 opacity-0 overflow-hidden"}
+  `}
+                >
+                  <iframe
+                    src={playerSrc}
+                    width="100%"
+                    height="80"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen"
+                    loading="lazy"
+                    className="rounded-lg shadow-md"
+                  />
                 </div>
               </div>
             </div>
