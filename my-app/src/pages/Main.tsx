@@ -574,7 +574,7 @@ const handleSpotifySearch = async () => {
               )}
               <button
                 onClick={handleLogout}
-                className="flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
+                className="flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors  focus:outline-none"
               >
                 <LogOut className="h-5 w-5" />
                 <span>Logout</span>
@@ -1010,18 +1010,31 @@ const handleSpotifySearch = async () => {
                 ) : null}
                 <div
                   className={`
-    transition-all duration-300
-    ${playerSrc ? "mt-4 h-[152px] opacity-100" : "h-0 opacity-0 overflow-hidden"}
+    transition-all duration-300 overflow-hidden
+    ${playerSrc ? "mt-4 max-h-[152px]" : "max-h-0"}
   `}
                 >
-                  <iframe
-                    src={playerSrc}
-                    width="100%"
-                    height="152"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen"
-                    loading="lazy"
-                    className="rounded-lg shadow-md"
-                  />
+                  <div className="relative h-[152px]">
+                    {/* Loader */}
+                    {isPlayerLoading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded-lg z-10">
+                        <Loader2 className="animate-spin text-gray-400" />
+                      </div>
+                    )}
+
+                    {/* iframe */}
+                    {playerSrc && (
+                      <iframe
+                        src={playerSrc}
+                        width="100%"
+                        height="152"
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen"
+                        loading="lazy"
+                        className="rounded-lg shadow-md"
+                        onLoad={() => setIsPlayerLoading(false)}
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1182,7 +1195,6 @@ const handleSpotifySearch = async () => {
                             )}
                           </button>
                         </div>
-                        
                       </div>
                     </div>
                   ))}
