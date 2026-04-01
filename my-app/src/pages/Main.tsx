@@ -18,6 +18,7 @@ import {
   Headphones,
   Music,
   Search,
+  Heart,
 } from "lucide-react";
 import { Notify, Confirm } from "notiflix";
 import { logout, getProfile } from "../redux/slices/authSlice";
@@ -76,6 +77,25 @@ const Main = () => {
 
   const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
   const [playerSrc, setPlayerSrc] = useState("");
+  const [isPlayerLoading, setIsPlayerLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  // Favorites state
+  const [favorites, setFavorites] = useState<any[]>(() => {
+    const saved = localStorage.getItem("favorites");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showFavorites, setShowFavorites] = useState(false);
+
+  useEffect(() => {
+    const cleaned = favorites.filter((t) => t && t.id && t.name && t.artists);
+
+    if (cleaned.length !== favorites.length) {
+      setFavorites(cleaned);
+    }
+  }, []);
+
+  
 
   useEffect(() => {
     // Only fetch profile if we have a valid token but no user data and haven't fetched yet
@@ -414,20 +434,21 @@ const Main = () => {
   }, [isAuthenticated, token, user]);
 
   // Handle Spotify search
-  const handleSpotifySearch = async () => {
-    if (!spotifyQuery) return;
+const handleSpotifySearch = async () => {
+  if (!spotifyQuery) return;
 
-    setLoadingSpotify(true);
+  setHasSearched(true); 
+  setLoadingSpotify(true);
 
-    try {
-      const res = await searchSpotify(spotifyQuery);
-      setSpotifyResults(res.tracks.items);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingSpotify(false);
-    }
-  };
+  try {
+    const res = await searchSpotify(spotifyQuery);
+    setSpotifyResults(res.tracks.items);
+  } catch (e) {
+    console.error(e);
+  } finally {
+    setLoadingSpotify(false);
+  }
+};
 
   useEffect(() => {
     if (!selectedTrack) return;
@@ -438,6 +459,15 @@ const Main = () => {
 
     return () => clearTimeout(timeout);
   }, [selectedTrack]);
+
+
+  useEffect(() => {
+    setHasSearched(false);
+  }, [spotifyQuery]);
+
+  useEffect(() => {
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+  }, [favorites]);
 
   // Show loading while fetching profile (only if we're authenticated and have a token)
   if (
@@ -716,7 +746,141 @@ const Main = () => {
                 </span>
               </button>
             </div>
+            {/* Favorites */}
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow">
+              <div className="flex items-start space-x-3 sm:space-x-4">
+                <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-pink-100 rounded-full">
+                  <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-pink-600" />
+                </div>
+
+                <div className="flex-1">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
+                    Favorites
+                  </h3>
+                  <p className="text-gray-600 text-xs sm:text-sm">
+                    Your saved tracks
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowFavorites(!showFavorites)}
+                className="
+      w-full mt-3
+      bg-gradient-to-r from-pink-500 to-rose-600
+      text-white font-semibold
+      py-2 sm:py-3 rounded-lg
+      hover:scale-[1.01]
+      active:scale-[0.99]
+      transition-all duration-200
+      flex items-center justify-center gap-2
+    "
+              >
+                <Heart className="h-4 w-4" />
+                {showFavorites ? "Hide Favorites" : "View Favorites"}
+              </button>
+            </div>
           </div>
+          {/* Favorites Card */}
+          {showFavorites && (
+            <div className="max-w-2xl mx-auto mt-6">
+              <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-pink-100 rounded-lg">
+                      <Heart className="w-4 h-4 text-pink-500 fill-pink-500" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Your Favorites
+                    </h3>
+                  </div>
+
+                  <span className="text-xs text-gray-400">
+                    {favorites.length} tracks
+                  </span>
+                </div>
+
+                {favorites.length === 0 ? (
+                  <p className="text-center text-gray-400 py-6">
+                    You don’t have any favorite tracks yet
+                  </p>
+                ) : (
+                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1.5 custom-scroll">
+                    {favorites.map((track) => {
+                      if (!track) return null;
+                      const isActive = selectedTrack?.id === track.id;
+
+                      return (
+                        <div
+                          key={track.id}
+                          onClick={() => {
+                            setIsPlayerLoading(true);
+                            setSelectedTrack(track);
+                          }}
+                          className={`
+                  flex items-center gap-3 p-3 rounded-xl h-20 cursor-pointer transition-all duration-200
+                  ${
+                    isActive
+                      ? "bg-pink-50 border border-pink-300"
+                      : "bg-gray-50 hover:bg-gray-100 border border-transparent"
+                  }
+                `}
+                        >
+                          {/* cover */}
+                          <img
+                            src={
+                              track.album?.images?.[2]?.url ||
+                              track.album?.images?.[0]?.url ||
+                              "/placeholder.png"
+                            }
+                            alt={track.name}
+                            className="w-12 h-12 rounded-md object-cover"
+                          />
+
+                          {/* info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-800 truncate">
+                              {track.name}
+                            </p>
+                            <p className="text-sm text-gray-500 truncate">
+                              {track.artists.map((a: any) => a.name).join(", ")}
+                            </p>
+                          </div>
+
+                          {/* duration */}
+                          <div className="text-xs text-gray-400">
+                            {Math.floor(track.duration_ms / 60000)}:
+                            {Math.floor((track.duration_ms % 60000) / 1000)
+                              .toString()
+                              .padStart(2, "0")}
+                          </div>
+
+                          {/* remove from favorites */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+
+                              setFavorites((prev) =>
+                                prev.filter((t) => t.id !== track.id),
+                              );
+                            }}
+                            className="
+                    p-2 rounded-full
+                    hover:bg-red-50
+                    transition-all
+                    focus:outline-none
+                  "
+                          >
+                            <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           {/* Spotify Card */}
           {showSpotify && (
             <div className="max-w-2xl mx-auto">
@@ -781,9 +945,12 @@ const Main = () => {
                       return (
                         <div
                           key={track.id}
-                          onClick={() => setSelectedTrack(track)}
+                          onClick={() => {
+                            setIsPlayerLoading(true);
+                            setSelectedTrack(track);
+                          }}
                           className={`
-            flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200
+            flex items-center gap-3 p-3 rounded-xl h-20 cursor-pointer transition-all duration-200
             ${
               isActive
                 ? "bg-green-50 border border-green-300"
@@ -812,11 +979,31 @@ const Main = () => {
                               .toString()
                               .padStart(2, "0")}
                           </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+
+                              setFavorites((prev) =>
+                                prev.find((t) => t.id === track.id)
+                                  ? prev.filter((t) => t.id !== track.id)
+                                  : [...prev, track],
+                              );
+                            }}
+                            className="focus:outline-none"
+                          >
+                            <Heart
+                              className={`w-4 h-4 ${
+                                favorites.find((t) => t.id === track.id)
+                                  ? "text-red-500 fill-red-500"
+                                  : "text-gray-400"
+                              }`}
+                            />
+                          </button>
                         </div>
                       );
                     })}
                   </div>
-                ) : spotifyQuery ? (
+                ) : hasSearched && spotifyResults.length === 0 ? (
                   <p className="text-center text-sm text-gray-400 pt-4">
                     No tracks found
                   </p>
@@ -824,13 +1011,13 @@ const Main = () => {
                 <div
                   className={`
     transition-all duration-300
-    ${playerSrc ? "mt-4 h-[80px] opacity-100" : "h-0 opacity-0 overflow-hidden"}
+    ${playerSrc ? "mt-4 h-[152px] opacity-100" : "h-0 opacity-0 overflow-hidden"}
   `}
                 >
                   <iframe
                     src={playerSrc}
                     width="100%"
-                    height="80"
+                    height="152"
                     allow="autoplay; clipboard-write; encrypted-media; fullscreen"
                     loading="lazy"
                     className="rounded-lg shadow-md"
@@ -995,6 +1182,7 @@ const Main = () => {
                             )}
                           </button>
                         </div>
+                        
                       </div>
                     </div>
                   ))}
