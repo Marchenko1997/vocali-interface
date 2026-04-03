@@ -24,6 +24,7 @@ import AudioFilesList from "../components/AudioFilesList";
 import { useAudioFiles } from "../hooks/useAudioFiles";
 import { useSpotify } from "../hooks/useSpotify";
 
+
 const Main = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -40,6 +41,7 @@ const Main = () => {
 
   const audioFiles = useAudioFiles(isAuthenticated, token);
   const spotify = useSpotify();
+
 
   // Auth: fetch profile
   useEffect(() => {
@@ -141,6 +143,7 @@ const Main = () => {
     console.error("Real-time recording error:", error);
   };
 
+
   // Loading states
   if (
     loading &&
@@ -202,7 +205,10 @@ const Main = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="space-y-6 sm:space-y-8">
           {/* Action Cards Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
+          <div
+            
+            className="cards grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto"
+          >
             {/* Upload Audio Card */}
             <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow">
               <div className="flex items-start space-x-3 sm:space-x-4">
@@ -363,17 +369,34 @@ const Main = () => {
           </div>
 
           {/* Favorites Panel */}
-          {showFavorites && (
+          <div
+            className={`
+    transition-all duration-300 overflow-hidden will-change-transform
+    ${
+      showFavorites
+        ? "opacity-100 translate-y-0 max-h-[500px]"
+        : "opacity-0 -translate-y-2 max-h-0 pointer-events-none"
+    }
+  `}
+          >
             <FavoritesPanel
               favorites={spotify.favorites}
               selectedTrack={spotify.selectedTrack}
               onSelectTrack={spotify.selectTrack}
               onRemoveFavorite={spotify.removeFavorite}
             />
-          )}
-
+          </div>
           {/* Spotify Panel */}
-          {showSpotify && (
+          <div
+            className={`
+    transition-all duration-300 overflow-hidden
+    ${
+      showSpotify
+        ? "opacity-100 translate-y-0 max-h-[500px]"
+        : "opacity-0 -translate-y-2 max-h-0 pointer-events-none"
+    }
+  `}
+          >
             <SpotifyPanel
               spotifyQuery={spotify.spotifyQuery}
               onQueryChange={spotify.setSpotifyQuery}
@@ -389,10 +412,19 @@ const Main = () => {
               isFavorite={spotify.isFavorite}
               onToggleFavorite={spotify.toggleFavorite}
             />
-          )}
+          </div>
 
           {/* Real-Time Recording */}
-          {showRealTimeRecording && (
+          <div
+            className={`
+    transition-all duration-300 overflow-hidden will-change-transform
+    ${
+      showRealTimeRecording
+        ? "opacity-100 translate-y-0 max-h-[500px]"
+        : "opacity-0 -translate-y-2 max-h-0 pointer-events-none"
+    }
+  `}
+          >
             <div className="max-w-2xl mx-auto">
               <RealTimeRecording
                 onTranscriptionComplete={handleRealTimeTranscriptionComplete}
@@ -400,7 +432,7 @@ const Main = () => {
                 isSaving={savingRealTimeRecording}
               />
             </div>
-          )}
+          </div>
 
           {/* Audio Files List */}
           <AudioFilesList
@@ -419,6 +451,6 @@ const Main = () => {
       </main>
     </div>
   );
-};
+};;
 
 export default Main;

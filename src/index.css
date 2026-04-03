@@ -334,3 +334,48 @@
 .custom-scroll::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
+
+/* левая колонка */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* правая колонка */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* All cards */
+.cards > div {
+  opacity: 0;
+}
+
+/* left column */
+.cards > div:nth-child(odd) {
+  animation: slideInLeft 0.5s ease-out forwards;
+}
+
+/* right column */
+.cards > div:nth-child(even) {
+  animation: slideInRight 0.5s ease-out forwards;
+}
+
+/* stagger */
+.cards > div:nth-child(1) { animation-delay: 0.05s; }
+.cards > div:nth-child(2) { animation-delay: 0.1s; }
+.cards > div:nth-child(3) { animation-delay: 0.15s; }
+.cards > div:nth-child(4) { animation-delay: 0.2s; }
