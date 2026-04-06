@@ -1,5 +1,6 @@
 import { Loader2, Music, Search } from "lucide-react";
 import TrackItem from "./TrackItem";
+import { useRef } from "react";
 
 interface SpotifyPanelProps {
   spotifyQuery: string;
@@ -15,6 +16,8 @@ interface SpotifyPanelProps {
   onSelectTrack: (track: any) => void;
   isFavorite: (trackId: string) => boolean;
   onToggleFavorite: (track: any) => void;
+  loadMore: () => void;
+  hasMore: boolean;
 }
 
 const SpotifyPanel = ({
@@ -31,7 +34,23 @@ const SpotifyPanel = ({
   onSelectTrack,
   isFavorite,
   onToggleFavorite,
+  loadMore,
+  hasMore
 }: SpotifyPanelProps) => {
+  const listRef = useRef<HTMLDivElement | null>(null);
+  
+  const handleScroll = () => {
+    if (!listRef.current || !hasMore) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = listRef.current;
+
+    if (scrollTop + clientHeight >= scrollHeight - 50) {
+      if (!loadingSpotify) {
+        loadMore();
+      }
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
@@ -41,6 +60,9 @@ const SpotifyPanel = ({
             <input
               value={spotifyQuery}
               onChange={(e) => onQueryChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onSearch();
+              }}
               placeholder="Search music..."
               className="
                 w-full pl-11 pr-4 py-3
@@ -86,7 +108,11 @@ const SpotifyPanel = ({
             <Loader2 className="animate-spin text-gray-400" />
           </div>
         ) : spotifyResults.length > 0 ? (
-          <div className="space-y-2 max-h-64 overflow-y-auto pr-1.5  mt-4 custom-scroll">
+          <div
+            ref={listRef}
+            onScroll={handleScroll}
+            className="space-y-2 max-h-64 overflow-y-auto pr-1.5 mt-4 custom-scroll"
+          >
             {spotifyResults.map((track) => (
               <TrackItem
                 key={track.id}
@@ -101,6 +127,20 @@ const SpotifyPanel = ({
                 }}
               />
             ))}
+
+         
+            {hasMore && loadingSpotify && (
+              <div className="flex justify-center py-2">
+                <Loader2 className="animate-spin text-gray-400" />
+              </div>
+            )}
+
+         
+            {!hasMore && spotifyResults.length > 0 && (
+              <p className="text-center text-xs text-gray-400 py-2">
+                No more results
+              </p>
+            )}
           </div>
         ) : hasSearched && spotifyResults.length === 0 ? (
           <p className="text-center text-sm text-gray-400 pt-4">

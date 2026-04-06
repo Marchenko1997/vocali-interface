@@ -205,10 +205,7 @@ const Main = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="space-y-6 sm:space-y-8">
           {/* Action Cards Grid */}
-          <div
-            
-            className="cards grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto"
-          >
+          <div className="cards grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
             {/* Upload Audio Card */}
             <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow">
               <div className="flex items-start space-x-3 sm:space-x-4">
@@ -411,6 +408,8 @@ const Main = () => {
               onSelectTrack={spotify.selectTrack}
               isFavorite={spotify.isFavorite}
               onToggleFavorite={spotify.toggleFavorite}
+              loadMore={spotify.loadMore}
+              hasMore={spotify.hasMore}
             />
           </div>
 

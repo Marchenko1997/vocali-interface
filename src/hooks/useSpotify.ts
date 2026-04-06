@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { searchSpotify } from "../services/spotify";
 
 export function useSpotify() {
@@ -15,6 +15,14 @@ export function useSpotify() {
     const saved = localStorage.getItem("favorites");
     return saved ? JSON.parse(saved) : [];
   });
+
+  const [hasMore, setHasMore] = useState(true);
+  const LIMIT = 10;
+
+ 
+  const offsetRef = useRef(0);
+
+  const searchIdRef = useRef(0);
 
   // Clean invalid favorites on mount
   useEffect(() => {
@@ -43,39 +51,96 @@ export function useSpotify() {
     setHasSearched(false);
   }, [spotifyQuery]);
 
-  const handleSpotifySearch = async () => {
-    if (!spotifyQuery) return;
-    setHasSearched(true);
-    setLoadingSpotify(true);
-    try {
-      const res = await searchSpotify(spotifyQuery);
-      setSpotifyResults(res.tracks.items);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingSpotify(false);
-    }
-  };
 
-  const selectTrack = (track: any) => {
+  const handleSpotifySearch = useCallback(
+    async (newSearch = false) => {
+      if (!spotifyQuery.trim()) return;
+
+
+      const currentSearchId = ++searchIdRef.current;
+
+      if (newSearch) {
+        offsetRef.current = 0;
+        setSpotifyResults([]);
+        setHasMore(true);
+      }
+
+      const currentOffset = offsetRef.current;
+
+      setHasSearched(true);
+      setLoadingSpotify(true);
+
+      try {
+        const res = await searchSpotify(spotifyQuery, currentOffset);
+
+    
+        if (currentSearchId !== searchIdRef.current) return;
+
+        const newItems: any[] = res?.tracks?.items ?? [];
+
+        setSpotifyResults((prev) =>
+          newSearch ? newItems : [...prev, ...newItems],
+        );
+
+       
+        offsetRef.current = currentOffset + newItems.length;
+
+        setHasMore(newItems.length >= LIMIT);
+      } catch (e) {
+        console.error(e);
+      } finally {
+     
+        if (currentSearchId === searchIdRef.current) {
+          setLoadingSpotify(false);
+        }
+      }
+    },
+    [spotifyQuery],
+  );
+
+ 
+  useEffect(() => {
+    if (!spotifyQuery.trim()) {
+      setSpotifyResults([]);
+      offsetRef.current = 0;
+      setHasMore(true);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      handleSpotifySearch(true);
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [spotifyQuery, handleSpotifySearch]);
+
+  const loadMore = useCallback(() => {
+    if (!loadingSpotify && hasMore) {
+      handleSpotifySearch(false);
+    }
+  }, [loadingSpotify, hasMore, handleSpotifySearch]);
+
+  const selectTrack = useCallback((track: any) => {
     setIsPlayerLoading(true);
     setSelectedTrack(track);
-  };
+  }, []);
 
-  const toggleFavorite = (track: any) => {
+  const toggleFavorite = useCallback((track: any) => {
     setFavorites((prev) =>
       prev.find((t) => t.id === track.id)
         ? prev.filter((t) => t.id !== track.id)
         : [...prev, track],
     );
-  };
+  }, []);
 
-  const removeFavorite = (trackId: string) => {
+  const removeFavorite = useCallback((trackId: string) => {
     setFavorites((prev) => prev.filter((t) => t.id !== trackId));
-  };
+  }, []);
 
-  const isFavorite = (trackId: string) =>
-    favorites.some((t) => t.id === trackId);
+  const isFavorite = useCallback(
+    (trackId: string) => favorites.some((t) => t.id === trackId),
+    [favorites],
+  );
 
   return {
     spotifyQuery,
@@ -93,5 +158,7 @@ export function useSpotify() {
     toggleFavorite,
     removeFavorite,
     isFavorite,
+    loadMore,
+    hasMore,
   };
 }
