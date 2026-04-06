@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { searchSpotify } from "../services/spotify";
 
+const LIMIT = 10;
+
 export function useSpotify() {
   const [spotifyQuery, setSpotifyQuery] = useState("");
   const [spotifyResults, setSpotifyResults] = useState<any[]>([]);
@@ -17,19 +19,16 @@ export function useSpotify() {
   });
 
   const [hasMore, setHasMore] = useState(true);
-  const LIMIT = 10;
 
- 
   const offsetRef = useRef(0);
-
   const searchIdRef = useRef(0);
+  const isFetchingRef = useRef(false);
+  const skipDebounceRef = useRef(false);
 
   // Clean invalid favorites on mount
   useEffect(() => {
     const cleaned = favorites.filter((t) => t && t.id && t.name && t.artists);
-    if (cleaned.length !== favorites.length) {
-      setFavorites(cleaned);
-    }
+    if (cleaned.length !== favorites.length) setFavorites(cleaned);
   }, []);
 
   // Sync favorites to localStorage
@@ -38,26 +37,28 @@ export function useSpotify() {
   }, [favorites]);
 
   // Debounce player src update
-  useEffect(() => {
-    if (!selectedTrack) return;
-    const timeout = setTimeout(() => {
-      setPlayerSrc(`https://open.spotify.com/embed/track/${selectedTrack.id}`);
-    }, 150);
-    return () => clearTimeout(timeout);
-  }, [selectedTrack]);
+useEffect(() => {
+  if (!selectedTrack) return;
+  const timeout = setTimeout(() => {
+    setPlayerSrc(
+      `https://open.spotify.com/embed/track/${selectedTrack.id}?autoplay=1`, 
+    );
+  }, 150);
+  return () => clearTimeout(timeout);
+}, [selectedTrack]);
 
   // Reset hasSearched when query changes
   useEffect(() => {
     setHasSearched(false);
   }, [spotifyQuery]);
 
-
   const handleSpotifySearch = useCallback(
     async (newSearch = false) => {
       if (!spotifyQuery.trim()) return;
-
+      if (isFetchingRef.current) return;
 
       const currentSearchId = ++searchIdRef.current;
+      isFetchingRef.current = true;
 
       if (newSearch) {
         offsetRef.current = 0;
@@ -73,37 +74,43 @@ export function useSpotify() {
       try {
         const res = await searchSpotify(spotifyQuery, currentOffset);
 
-    
         if (currentSearchId !== searchIdRef.current) return;
 
         const newItems: any[] = res?.tracks?.items ?? [];
 
-        setSpotifyResults((prev) =>
-          newSearch ? newItems : [...prev, ...newItems],
-        );
+        setSpotifyResults((prev) => {
+          if (newSearch) return newItems;
+          const existingIds = new Set(prev.map((t) => t.id));
+          const unique = newItems.filter((t) => !existingIds.has(t.id));
+          return [...prev, ...unique];
+        });
 
-       
         offsetRef.current = currentOffset + newItems.length;
-
         setHasMore(newItems.length >= LIMIT);
       } catch (e) {
         console.error(e);
       } finally {
-     
         if (currentSearchId === searchIdRef.current) {
           setLoadingSpotify(false);
+          isFetchingRef.current = false;
         }
       }
     },
     [spotifyQuery],
   );
 
- 
+  // Debounce поиска при вводе
   useEffect(() => {
     if (!spotifyQuery.trim()) {
       setSpotifyResults([]);
       offsetRef.current = 0;
       setHasMore(true);
+      return;
+    }
+
+    // Пропускаем если запрос пришёл из playByVoice
+    if (skipDebounceRef.current) {
+      skipDebounceRef.current = false;
       return;
     }
 
@@ -115,9 +122,7 @@ export function useSpotify() {
   }, [spotifyQuery, handleSpotifySearch]);
 
   const loadMore = useCallback(() => {
-    if (!loadingSpotify && hasMore) {
-      handleSpotifySearch(false);
-    }
+    if (!loadingSpotify && hasMore) handleSpotifySearch(false);
   }, [loadingSpotify, hasMore, handleSpotifySearch]);
 
   const selectTrack = useCallback((track: any) => {
@@ -142,6 +147,53 @@ export function useSpotify() {
     [favorites],
   );
 
+  const playNext = useCallback(() => {
+    if (!selectedTrack || spotifyResults.length === 0) return;
+    const idx = spotifyResults.findIndex((t) => t.id === selectedTrack.id);
+    const next = spotifyResults[idx + 1];
+    if (next) selectTrack(next);
+  }, [selectedTrack, spotifyResults, selectTrack]);
+
+  const playPrevious = useCallback(() => {
+    if (!selectedTrack || spotifyResults.length === 0) return;
+    const idx = spotifyResults.findIndex((t) => t.id === selectedTrack.id);
+    const prev = spotifyResults[idx - 1];
+    if (prev) selectTrack(prev);
+  }, [selectedTrack, spotifyResults, selectTrack]);
+
+  const pauseTrack = useCallback(() => {
+    setPlayerSrc("");
+    setSelectedTrack(null);
+  }, []);
+
+  const playByVoice = useCallback(
+    async (query: string) => {
+      try {
+        const res = await searchSpotify(query, 0);
+        const items: any[] = res?.tracks?.items ?? [];
+
+        if (items.length > 0) {
+          // Блокируем дебаунс перед setSpotifyQuery
+          skipDebounceRef.current = true;
+          // Отменяем любой pending запрос
+          searchIdRef.current++;
+          // Сбрасываем isFetching на случай если висел
+          isFetchingRef.current = false;
+
+          setSpotifyQuery(query);
+          setSpotifyResults(items);
+          offsetRef.current = items.length;
+          setHasMore(items.length >= LIMIT);
+          setHasSearched(true);
+          selectTrack(items[0]);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    [selectTrack],
+  );
+
   return {
     spotifyQuery,
     setSpotifyQuery,
@@ -160,5 +212,9 @@ export function useSpotify() {
     isFavorite,
     loadMore,
     hasMore,
+    playNext,
+    playPrevious,
+    pauseTrack,
+    playByVoice,
   };
 }

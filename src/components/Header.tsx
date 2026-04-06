@@ -1,13 +1,20 @@
 import { useState } from "react";
-import { LogOut, User, Mail, Menu, X } from "lucide-react";
+import { LogOut, User, Mail, Menu, X, Mic, MicOff } from "lucide-react";
 import Logo from "./Logo";
 
 interface HeaderProps {
   user: { name: string; email: string } | null;
   onLogout: () => void;
+  voiceActive: boolean;
+  onVoiceToggle: () => void;
 }
 
-const Header = ({ user, onLogout }: HeaderProps) => {
+const Header = ({
+  user,
+  onLogout,
+  voiceActive,
+  onVoiceToggle,
+}: HeaderProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -24,7 +31,7 @@ const Header = ({ user, onLogout }: HeaderProps) => {
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors flex items-center justify-center"
+            className="lg:hidden p-2 rounded-md text-gray-600 focus:outline-none hover:text-gray-800 hover:bg-gray-100 transition-colors flex items-center justify-center"
           >
             {mobileMenuOpen ? (
               <X className="h-6 w-6" />
@@ -34,13 +41,37 @@ const Header = ({ user, onLogout }: HeaderProps) => {
           </button>
 
           {/* Desktop header content */}
-          <div className="hidden lg:flex items-center space-x-6">
-            <div className="flex items-center space-x-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-green-700 font-medium">
-                Voice recognition ready
-              </span>
-            </div>
+          <div className="hidden lg:flex items-center space-x-4">
+            {/* ✅ Voice toggle кнопка */}
+            <button
+              onClick={onVoiceToggle}
+              title={
+                voiceActive ? "Disable voice commands" : "Enable voice commands"
+              }
+              className={`
+                flex items-center space-x-2 px-3 py-2 rounded-lg border font-medium text-sm
+                transition-all duration-200
+                ${
+                  voiceActive
+                    ? "bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
+                    : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"
+                }
+              `}
+            >
+              {voiceActive ? (
+                <>
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <Mic className="h-4 w-4" />
+                  <span>Voice On</span>
+                </>
+              ) : (
+                <>
+                  <div className="w-2 h-2 bg-gray-300 rounded-full" />
+                  <MicOff className="h-4 w-4" />
+                  <span>Voice Off</span>
+                </>
+              )}
+            </button>
 
             {user && (
               <div className="flex items-center space-x-3">
@@ -54,9 +85,10 @@ const Header = ({ user, onLogout }: HeaderProps) => {
                 </div>
               </div>
             )}
+
             <button
               onClick={onLogout}
-              className="flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors  focus:outline-none"
+              className="flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors focus:outline-none"
             >
               <LogOut className="h-5 w-5" />
               <span>Logout</span>
@@ -67,12 +99,33 @@ const Header = ({ user, onLogout }: HeaderProps) => {
         {/* Mobile menu */}
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-gray-200 py-4 space-y-4">
-            <div className="flex items-center space-x-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-green-700 font-medium">
-                Voice recognition ready
-              </span>
-            </div>
+            {/* ✅ Voice toggle mobile */}
+            <button
+              onClick={onVoiceToggle}
+              className={`
+                w-full flex items-center space-x-2 px-3 py-2 rounded-lg border font-medium text-sm
+                transition-all duration-200
+                ${
+                  voiceActive
+                    ? "bg-green-50 border-green-300 text-green-700"
+                    : "bg-gray-50 border-gray-200 text-gray-500"
+                }
+              `}
+            >
+              {voiceActive ? (
+                <>
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <Mic className="h-4 w-4" />
+                  <span>Voice Commands: On</span>
+                </>
+              ) : (
+                <>
+                  <div className="w-2 h-2 bg-gray-300 rounded-full" />
+                  <MicOff className="h-4 w-4" />
+                  <span>Voice Commands: Off</span>
+                </>
+              )}
+            </button>
 
             {user && (
               <div className="space-y-2">
@@ -86,6 +139,7 @@ const Header = ({ user, onLogout }: HeaderProps) => {
                 </div>
               </div>
             )}
+
             <button
               onClick={onLogout}
               className="flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors w-full p-2 rounded-lg hover:bg-gray-100"

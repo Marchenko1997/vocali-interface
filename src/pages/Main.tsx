@@ -23,6 +23,7 @@ import AudioFilesList from "../components/AudioFilesList";
 
 import { useAudioFiles } from "../hooks/useAudioFiles";
 import { useSpotify } from "../hooks/useSpotify";
+import { useVoiceCommands } from "../hooks/useVoiceCommands";
 
 
 const Main = () => {
@@ -41,7 +42,7 @@ const Main = () => {
 
   const audioFiles = useAudioFiles(isAuthenticated, token);
   const spotify = useSpotify();
-
+  const [voiceActive, setVoiceActive] = useState(false);
 
   // Auth: fetch profile
   useEffect(() => {
@@ -143,6 +144,42 @@ const Main = () => {
     console.error("Real-time recording error:", error);
   };
 
+  // Voice commands
+
+const { playByVoice, pauseTrack, playNext, playPrevious, toggleFavorite, selectedTrack } = spotify;
+
+const { startListening, stopListening } = useVoiceCommands({
+  onPlay: (query) => {
+    if (!query) return;
+    setShowSpotify(true);
+    playByVoice(query);
+  },
+  onPause: () => {
+    pauseTrack();
+    setShowSpotify(false);
+  },
+  onNext: playNext,
+  onPrevious: playPrevious,
+
+  onFavorite: () => {
+    if (!selectedTrack) return;
+    toggleFavorite(selectedTrack);
+    setShowFavorites(true);
+  },
+  onRecord: () => {
+    setShowRealTimeRecording((prev) => !prev);
+  },
+});
+
+const handleVoiceToggle = () => {
+  if (voiceActive) {
+    stopListening();
+  } else {
+    startListening();
+  }
+  setVoiceActive(!voiceActive);
+};
+
 
   // Loading states
   if (
@@ -200,7 +237,12 @@ const Main = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <Header user={user} onLogout={handleLogout} />
+      <Header
+        user={user}
+        onLogout={handleLogout}
+        voiceActive={voiceActive} 
+        onVoiceToggle={handleVoiceToggle}
+      />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="space-y-6 sm:space-y-8">
@@ -389,7 +431,7 @@ const Main = () => {
     transition-all duration-300 overflow-hidden
     ${
       showSpotify
-        ? "opacity-100 translate-y-0 max-h-[500px]"
+        ? "opacity-100 translate-y-0 max-h-[700px]"
         : "opacity-0 -translate-y-2 max-h-0 pointer-events-none"
     }
   `}
@@ -450,6 +492,6 @@ const Main = () => {
       </main>
     </div>
   );
-};;
+};
 
 export default Main;
