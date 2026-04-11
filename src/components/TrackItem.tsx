@@ -33,17 +33,23 @@ const TrackItem = ({
       <img
         src={
           track.album?.images?.[2]?.url ||
+          track.album?.images?.[1]?.url ||
           track.album?.images?.[0]?.url ||
+          track.image ||
           "/placeholder.png"
         }
         alt={track.name}
-        className="w-12 h-12 rounded-md object-cover"
+        className="w-12 h-12 rounded-md object-cover bg-gray-200"
+        onError={(e) => {
+          e.currentTarget.src = "/placeholder.png";
+        }}
       />
-
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-gray-800 truncate">{track.name}</p>
         <p className="text-sm text-gray-500 truncate">
-          {track.artists.map((a: any) => a.name).join(", ")}
+          {track.artists
+            ? track.artists.map((a: any) => a.name).join(", ")
+            : (track.artist ?? "")}
         </p>
       </div>
 

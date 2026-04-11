@@ -116,7 +116,13 @@ const SpotifyPanel = ({
               {aiQueue.map((track, index) => (
                 <TrackItem
                   key={`${track.id}-${index}`}
-                  track={track}
+                  track={{
+                    ...track,
+                    
+                    artists: track.artists ?? [
+                      { name: track.artist ?? "Unknown" },
+                    ],
+                  }}
                   isActive={selectedTrack?.id === track.id}
                   activeColor="green"
                   onSelect={() => onSelectTrack(track)}
@@ -147,11 +153,10 @@ const SpotifyPanel = ({
                 key={track.id}
                 track={{
                   ...track,
-                  artists: [{ name: track.artist }], 
-                  album: {
-                    name: track.album,
-                    images: track.image ? [{ url: track.image }] : [],
-                  },
+
+                  artists: track.artists ?? [
+                    { name: track.artist ?? "Unknown" },
+                  ],
                 }}
                 isActive={selectedTrack?.id === track.id}
                 activeColor="green"
