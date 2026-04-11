@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import {
   PLAY_REGEX,
+  PLAYLIST_REGEX,
   VOICE_COMMANDS,
 
 } from "../constants/voiceCommands";
@@ -12,6 +13,7 @@ interface VoiceCommandHandlers {
   onPrevious: () => void;
   onFavorite: () => void;
   onRecord: () => void;
+  onGeneratePlaylist: (prompt: string) => void;
 }
 
 export function useVoiceCommands(handlers: VoiceCommandHandlers) {
@@ -35,6 +37,14 @@ export function useVoiceCommands(handlers: VoiceCommandHandlers) {
       handlersRef.current.onPlay(playMatch[1]);
       return;
     }
+
+ const playlistMatch = PLAYLIST_REGEX.test(t);
+ if (playlistMatch) {
+   console.log("🎵 generate playlist:", t);
+   handlersRef.current.onGeneratePlaylist(t); 
+   return;
+ }
+
 
     
     if (VOICE_COMMANDS.record.some((w) => t.includes(w))) {

@@ -24,6 +24,7 @@ import AudioFilesList from "../components/AudioFilesList";
 import { useAudioFiles } from "../hooks/useAudioFiles";
 import { useSpotify } from "../hooks/useSpotify";
 import { useVoiceCommands } from "../hooks/useVoiceCommands";
+import { useAIPlaylist } from "../hooks/useAIPlaylist";
 
 
 const Main = () => {
@@ -148,6 +149,8 @@ const Main = () => {
 
 const { playByVoice, pauseTrack, playNext, playPrevious, toggleFavorite, selectedTrack } = spotify;
 
+  const { generatePlaylist, isGenerating, queue } = useAIPlaylist();
+  
 const { startListening, stopListening } = useVoiceCommands({
   onPlay: (query) => {
     if (!query) return;
@@ -168,6 +171,11 @@ const { startListening, stopListening } = useVoiceCommands({
   },
   onRecord: () => {
     setShowRealTimeRecording((prev) => !prev);
+  },
+  onGeneratePlaylist: (prompt) => {
+
+    generatePlaylist(prompt);
+    setShowSpotify(true);
   },
 });
 
@@ -240,7 +248,7 @@ const handleVoiceToggle = () => {
       <Header
         user={user}
         onLogout={handleLogout}
-        voiceActive={voiceActive} 
+        voiceActive={voiceActive}
         onVoiceToggle={handleVoiceToggle}
       />
 
@@ -425,6 +433,15 @@ const handleVoiceToggle = () => {
               onRemoveFavorite={spotify.removeFavorite}
             />
           </div>
+          {/* Ai Playlist */}
+          {isGenerating && (
+            <div className="fixed bottom-6 right-6 bg-white rounded-xl shadow-lg p-4 flex items-center gap-3 z-50">
+              <Loader2 className="h-5 w-5 text-green-500 animate-spin" />
+              <span className="text-sm font-medium text-gray-700">
+                Generating playlist...
+              </span>
+            </div>
+          )}
           {/* Spotify Panel */}
           <div
             className={`
@@ -452,6 +469,8 @@ const handleVoiceToggle = () => {
               onToggleFavorite={spotify.toggleFavorite}
               loadMore={spotify.loadMore}
               hasMore={spotify.hasMore}
+              aiQueue={queue}
+              isGenerating={isGenerating}
             />
           </div>
 

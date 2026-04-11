@@ -18,6 +18,8 @@ interface SpotifyPanelProps {
   onToggleFavorite: (track: any) => void;
   loadMore: () => void;
   hasMore: boolean;
+  aiQueue?: any[];
+  isGenerating?: boolean;
 }
 
 const SpotifyPanel = ({
@@ -35,10 +37,12 @@ const SpotifyPanel = ({
   isFavorite,
   onToggleFavorite,
   loadMore,
-  hasMore
+  hasMore,
+  aiQueue = [],
+  
 }: SpotifyPanelProps) => {
   const listRef = useRef<HTMLDivElement | null>(null);
-  
+
   const handleScroll = () => {
     if (!listRef.current || !hasMore) return;
 
@@ -102,6 +106,31 @@ const SpotifyPanel = ({
           </button>
         </div>
 
+        {/* AI Generated Queue */}
+        {aiQueue.length > 0 && (
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+              AI Playlist · {aiQueue.length} tracks
+            </p>
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1.5 custom-scroll">
+              {aiQueue.map((track, index) => (
+                <TrackItem
+                  key={`${track.id}-${index}`}
+                  track={track}
+                  isActive={selectedTrack?.id === track.id}
+                  activeColor="green"
+                  onSelect={() => onSelectTrack(track)}
+                  isFavorite={isFavorite(track.id)}
+                  onToggleFavorite={(e) => {
+                    e.stopPropagation();
+                    onToggleFavorite(track);
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Results */}
         {loadingSpotify ? (
           <div className="flex justify-center py-4">
@@ -116,7 +145,14 @@ const SpotifyPanel = ({
             {spotifyResults.map((track) => (
               <TrackItem
                 key={track.id}
-                track={track}
+                track={{
+                  ...track,
+                  artists: [{ name: track.artist }], 
+                  album: {
+                    name: track.album,
+                    images: track.image ? [{ url: track.image }] : [],
+                  },
+                }}
                 isActive={selectedTrack?.id === track.id}
                 activeColor="green"
                 onSelect={() => onSelectTrack(track)}
@@ -128,14 +164,12 @@ const SpotifyPanel = ({
               />
             ))}
 
-         
             {hasMore && loadingSpotify && (
               <div className="flex justify-center py-2">
                 <Loader2 className="animate-spin text-gray-400" />
               </div>
             )}
 
-         
             {!hasMore && spotifyResults.length > 0 && (
               <p className="text-center text-xs text-gray-400 py-2">
                 No more results
