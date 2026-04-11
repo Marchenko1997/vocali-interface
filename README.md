@@ -7,7 +7,7 @@ A voice-controlled audio platform with real-time transcription, Spotify integrat
 - **Real-time recording** with live transcription via Speechmatics WebSocket API
 - **Spotify integration** — search, play, and browse tracks with infinite scroll
 - **Favorites** — save and manage favorite Spotify tracks
-- **Voice commands** — control playback, recording, and favorites hands-free (EN/RU/UK)
+- **Voice commands** — control playback, recording, favorites, and AI playlist generation hands-free (EN/RU/UK)
 - **Audio file management** — upload, playback with waveform visualization, download transcriptions
 - **Auth** — login, register, password reset with JWT tokens
 
@@ -35,6 +35,16 @@ Voice control supports **English**, **Russian**, and **Ukrainian**. Toggle the m
 | Previous | `previous / back` | `назад / предыдущий` | `попередній` |
 | Favorite | `favorite` | `в избранное` | `до улюблених` |
 | Record | `start recording / stop recording` | `начать запись / остановить запись` | `почати запис / зупинити запис` |
+| Create playlist | `create <desc> playlist for <duration>` | `создай плейлист` | `зроби плейлист` |
+
+### AI Playlist Generation
+
+Voice commands can generate full playlists via AI. Say something like:
+
+- "create jazz playlist for 30 minutes"
+- "create chill playlist music for 2 hours"
+
+The command is captured via the Web Speech API and matched by `PLAYLIST_REGEX` in `useVoiceCommands.ts`. The prompt is sent to `POST /ai/playlist` on the backend, which uses OpenRouter AI (`openai/gpt-oss-120b`) to parse the intent — extracting genre, BPM hint, duration, and number of tracks needed. Real tracks are then fetched from Spotify via `GET /spotify/search`. The resulting queue is displayed in the SpotifyPanel under the label **"AI Playlist · N tracks"**.
 
 ## Setup
 
