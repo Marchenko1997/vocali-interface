@@ -106,19 +106,22 @@ const SpotifyPanel = ({
           </button>
         </div>
 
-        {/* AI Generated Queue */}
-        {aiQueue.length > 0 && (
+        {/* AI Queue ИЛИ результаты поиска — взаимоисключающие */}
+        {aiQueue.length > 0 ? (
+          // AI Playlist
           <div className="mt-4">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-              AI Playlist · {aiQueue.length} tracks
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                AI Playlist · {aiQueue.length} tracks
+              </p>
+              {/* кнопка очистить плейлист — опционально */}
+            </div>
             <div className="space-y-2 max-h-64 overflow-y-auto pr-1.5 custom-scroll">
               {aiQueue.map((track, index) => (
                 <TrackItem
                   key={`${track.id}-${index}`}
                   track={{
                     ...track,
-                    
                     artists: track.artists ?? [
                       { name: track.artist ?? "Unknown" },
                     ],
@@ -135,14 +138,12 @@ const SpotifyPanel = ({
               ))}
             </div>
           </div>
-        )}
-
-        {/* Results */}
-        {loadingSpotify ? (
+        ) : loadingSpotify ? (
           <div className="flex justify-center py-4">
             <Loader2 className="animate-spin text-gray-400" />
           </div>
         ) : spotifyResults.length > 0 ? (
+          // Search Results
           <div
             ref={listRef}
             onScroll={handleScroll}
@@ -153,7 +154,6 @@ const SpotifyPanel = ({
                 key={track.id}
                 track={{
                   ...track,
-
                   artists: track.artists ?? [
                     { name: track.artist ?? "Unknown" },
                   ],
@@ -168,13 +168,6 @@ const SpotifyPanel = ({
                 }}
               />
             ))}
-
-            {hasMore && loadingSpotify && (
-              <div className="flex justify-center py-2">
-                <Loader2 className="animate-spin text-gray-400" />
-              </div>
-            )}
-
             {!hasMore && spotifyResults.length > 0 && (
               <p className="text-center text-xs text-gray-400 py-2">
                 No more results
