@@ -44,6 +44,7 @@ const Main = () => {
   const audioFiles = useAudioFiles(isAuthenticated, token);
   const spotify = useSpotify();
   const [voiceActive, setVoiceActive] = useState(false);
+  const voiceActiveRef = useRef(false);
 
   // Auth: fetch profile
   useEffect(() => {
@@ -154,40 +155,40 @@ const { playByVoice, pauseTrack, playNext, playPrevious, toggleFavorite, selecte
 const { startListening, stopListening } = useVoiceCommands({
   onPlay: (query) => {
     if (!query) return;
-    setShowSpotify(true);
+    setTimeout(() => setShowSpotify(true), 0);
     playByVoice(query);
   },
   onPause: () => {
     pauseTrack();
-    setShowSpotify(false);
+    setTimeout(() => setShowSpotify(false), 0);
   },
   onNext: playNext,
   onPrevious: playPrevious,
-
   onFavorite: () => {
     if (!selectedTrack) return;
     toggleFavorite(selectedTrack);
-    setShowFavorites(true);
+    setTimeout(() => setShowFavorites(true), 0);
   },
   onRecord: () => {
     setShowRealTimeRecording((prev) => !prev);
   },
   onGeneratePlaylist: (prompt) => {
-
     generatePlaylist(prompt);
-    setShowSpotify(true);
+    setTimeout(() => setShowSpotify(true), 0);
   },
 });
 
 const handleVoiceToggle = () => {
-  if (voiceActive) {
+  if (voiceActiveRef.current) {
+    voiceActiveRef.current = false;
+    setVoiceActive(false);
     stopListening();
   } else {
+    voiceActiveRef.current = true;
+    setVoiceActive(true);
     startListening();
   }
-  setVoiceActive(!voiceActive);
 };
-
 
   // Loading states
   if (

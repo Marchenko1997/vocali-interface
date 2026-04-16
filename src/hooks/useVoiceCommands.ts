@@ -1,7 +1,68 @@
 import { useEffect, useRef, useCallback } from "react";
-import { PLAY_REGEX, PLAYLIST_REGEX, VOICE_COMMANDS } from "../constants/voiceCommands";
+import { PLAY_REGEX, PLAYLIST_REGEX, VOICE_COMMANDS, normalizeText } from "../constants/voiceCommands";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+const HAS_LETTERS = /[a-zA-Zа-яА-ЯёЁіІїЇєЄґҐ]/;
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  let curr = new Array<number>(n + 1);
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      curr[j] =
+        a[i - 1] === b[j - 1]
+          ? prev[j - 1]
+          : 1 + Math.min(prev[j], curr[j - 1], prev[j - 1]);
+    }
+    [prev, curr] = [curr, prev];
+  }
+  return prev[n];
+}
+
+function fuzzyMaxDist(len: number): number {
+  if (len <= 3) return 0;
+  if (len <= 6) return 1;
+  return 2;
+}
+
+function fuzzyIncludes(text: string, commands: string[]): boolean {
+  if (commands.some((cmd) => text.includes(cmd))) return true;
+
+  const textCompact = text.replace(/\s/g, "");
+  for (const cmd of commands) {
+    const cmdCompact = cmd.replace(/\s/g, "");
+    const maxDist = fuzzyMaxDist(cmdCompact.length);
+    if (maxDist === 0) continue;
+    for (let wLen = cmdCompact.length - maxDist; wLen <= cmdCompact.length + maxDist; wLen++) {
+      if (wLen < 1 || wLen > textCompact.length) continue;
+      for (let i = 0; i <= textCompact.length - wLen; i++) {
+        if (levenshtein(textCompact.slice(i, i + wLen), cmdCompact) <= maxDist) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function extractAfterCommand(text: string, commands: string[]): string | null {
+  const words = text.split(" ");
+  const sorted = [...commands].sort((a, b) => b.length - a.length);
+  for (const cmd of sorted) {
+    const cmdWords = cmd.split(" ");
+    if (cmdWords.length > words.length) continue;
+    const prefix = words.slice(0, cmdWords.length).join(" ");
+    if (levenshtein(prefix, cmd) <= fuzzyMaxDist(prefix.length)) {
+      const rest = words.slice(cmdWords.length).join(" ").trim();
+      if (rest) return rest;
+    }
+  }
+  return null;
+}
 
 interface VoiceCommandHandlers {
   onPlay: (query?: string) => void;
@@ -18,69 +79,99 @@ export function useVoiceCommands(handlers: VoiceCommandHandlers) {
   const streamRef = useRef<MediaStream | null>(null);
   const isListeningRef = useRef(false);
   const lastCommandRef = useRef<{ text: string; time: number }>({ text: "", time: 0 });
+  const pendingPlaylistRef = useRef<{ text: string; time: number } | null>(null);
 
   const handlersRef = useRef(handlers);
   useEffect(() => {
     handlersRef.current = handlers;
   }, [handlers]);
 
-  const parseCommand = useCallback((text: string) => {
-    const now = Date.now();
-    
-    if (text === lastCommandRef.current.text && now - lastCommandRef.current.time < 2000) return;
-    lastCommandRef.current = { text, time: now };
+  const parseCommand = useCallback((rawText: string) => {
+    if (!HAS_LETTERS.test(rawText)) return;
 
-    const t = text.toLowerCase().trim();
-    console.log("🎤 Voice input:", t);
+    const now = Date.now();
+    const t = normalizeText(rawText);
+    if (!t) return;
+
+    if (pendingPlaylistRef.current) {
+      const pending = pendingPlaylistRef.current;
+      pendingPlaylistRef.current = null;
+      if (now - pending.time <= 8000) {
+        const combined = pending.text + " " + t;
+        console.log("generate playlist (combined):", combined);
+        handlersRef.current.onGeneratePlaylist(combined);
+        return;
+      }
+      console.log("generate playlist (pending expired):", pending.text);
+      handlersRef.current.onGeneratePlaylist(pending.text);
+    }
+
+    if (t === lastCommandRef.current.text && now - lastCommandRef.current.time < 2000) return;
+    lastCommandRef.current = { text: t, time: now };
+
+    console.log("Voice input:", t);
 
     const playMatch = t.match(PLAY_REGEX);
-    if (playMatch) {
-      console.log("▶ play:", playMatch[1]);
-      handlersRef.current.onPlay(playMatch[1]);
+    if (playMatch?.[1]?.trim()) {
+      console.log("play:", playMatch[1].trim());
+      handlersRef.current.onPlay(playMatch[1].trim());
+      return;
+    }
+    const playQuery = extractAfterCommand(t, VOICE_COMMANDS.play);
+    if (playQuery) {
+      console.log("play (fuzzy):", playQuery);
+      handlersRef.current.onPlay(playQuery);
       return;
     }
 
-    if (PLAYLIST_REGEX.test(t)) {
-      console.log("🎵 generate playlist:", t);
-      handlersRef.current.onGeneratePlaylist(t);
+    if (PLAYLIST_REGEX.test(t) || fuzzyIncludes(t, VOICE_COMMANDS.playlist)) {
+      const desc = extractAfterCommand(t, VOICE_COMMANDS.playlist);
+      const descWordCount = desc ? desc.split(" ").filter(Boolean).length : 0;
+      if (descWordCount >= 2) {
+        console.log("generate playlist:", t);
+        handlersRef.current.onGeneratePlaylist(t);
+      } else {
+        console.log("playlist pending, waiting for description...");
+        pendingPlaylistRef.current = { text: t, time: now };
+      }
       return;
     }
 
-    if (VOICE_COMMANDS.record.some((w) => t.includes(w))) {
-      console.log("🎙 record toggle");
+    if (fuzzyIncludes(t, VOICE_COMMANDS.record)) {
+      console.log("record toggle");
       handlersRef.current.onRecord();
       return;
     }
 
-    if (VOICE_COMMANDS.favorite.some((w) => t.includes(w))) {
-      console.log("♥ favorite");
+    if (fuzzyIncludes(t, VOICE_COMMANDS.favorite)) {
+      console.log("favorite");
       handlersRef.current.onFavorite();
       return;
     }
 
-    if (VOICE_COMMANDS.next.some((w) => t.includes(w))) {
-      console.log("⏭ next");
+    if (fuzzyIncludes(t, VOICE_COMMANDS.next)) {
+      console.log("next");
       handlersRef.current.onNext();
       return;
     }
 
-    if (VOICE_COMMANDS.previous.some((w) => t.includes(w))) {
-      console.log("⏮ previous");
+    if (fuzzyIncludes(t, VOICE_COMMANDS.previous)) {
+      console.log("previous");
       handlersRef.current.onPrevious();
       return;
     }
 
-    if (VOICE_COMMANDS.pause.some((w) => t.includes(w))) {
-      console.log("⏸ pause");
+    if (fuzzyIncludes(t, VOICE_COMMANDS.pause)) {
+      console.log("pause");
       handlersRef.current.onPause();
       return;
     }
 
-    console.log("✗ no match:", t);
+    console.log("no match:", t);
   }, []);
 
   const sendChunkToWhisper = useCallback(async (blob: Blob) => {
-    if (blob.size < 1000) return; // тишина — пропускаем
+    if (blob.size < 10000) return; 
 
     try {
       const formData = new FormData();
@@ -107,18 +198,31 @@ export function useVoiceCommands(handlers: VoiceCommandHandlers) {
       streamRef.current = stream;
       isListeningRef.current = true;
 
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg",
-      });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg";
 
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) sendChunkToWhisper(e.data);
+      const startRecordingCycle = () => {
+        if (!isListeningRef.current || !streamRef.current) return;
+
+        const recorder = new MediaRecorder(streamRef.current, { mimeType });
+        mediaRecorderRef.current = recorder;
+
+        recorder.ondataavailable = (e) => {
+          if (e.data.size > 0) sendChunkToWhisper(e.data);
+        };
+
+        recorder.onstop = () => {
+          startRecordingCycle();
+        };
+
+        recorder.start();
+        setTimeout(() => {
+          if (recorder.state === "recording") recorder.stop();
+        }, 3000);
       };
 
-      mediaRecorder.start(3000); // чанк каждые 3 секунды
-      mediaRecorderRef.current = mediaRecorder;
+      startRecordingCycle();
 
-      console.log("🎤 Voice listening started (Whisper multilingual)");
+      console.log("Voice listening started (Whisper multilingual)");
     } catch (err) {
       console.warn("Microphone access denied:", err);
       isListeningRef.current = false;
@@ -128,18 +232,20 @@ export function useVoiceCommands(handlers: VoiceCommandHandlers) {
   const stopListening = useCallback(() => {
     isListeningRef.current = false;
 
-    mediaRecorderRef.current?.stop();
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
     mediaRecorderRef.current = null;
 
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
 
-    console.log("🔇 Voice listening stopped");
+    console.log("Voice listening stopped");
   }, []);
 
   useEffect(() => {
     return () => stopListening();
-  }, [stopListening]);
+  }, []);
 
   return { startListening, stopListening };
 }
