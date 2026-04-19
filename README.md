@@ -8,6 +8,7 @@ A voice-controlled audio platform with real-time transcription, Spotify integrat
 - **Spotify integration** — search, play, and browse tracks with infinite scroll
 - **Favorites** — save and manage favorite Spotify tracks
 - **Voice commands** — control playback, recording, favorites, and AI playlist generation hands-free (EN/RU/UK)
+- **Vocali Studio** — real-time audio visualizer with multiple modes, moods, and audio sources
 - **Audio file management** — upload, playback with waveform visualization, download transcriptions
 - **Auth** — login, register, password reset with JWT tokens
 
@@ -23,19 +24,54 @@ A voice-controlled audio platform with real-time transcription, Spotify integrat
 | Audio | WaveSurfer.js, Web Audio API |
 | Backend | FastAPI (separate repo) |
 
+## Vocali Studio
+
+A built-in audio visualizer at `/studio` that reacts to live audio in real time.
+
+![Vocali Studio](./src/assets/visual.png)
+
+### Audio Sources
+
+- **Microphone** — captures sound via mic input (e.g. music playing through speakers)
+- **System Audio** — captures audio directly from a browser tab using the `getDisplayMedia` API (user selects a tab and checks "Share tab audio" in the browser dialog)
+
+### Moods
+
+Select a mood to change the color palette and default visualization mode:
+
+| Mood | Default Mode | Color Palette |
+|------|-------------|---------------|
+| 🌙 Chill | Wave | Blue tones |
+| 🔥 Party | Particles | Red/orange tones |
+| 🧠 Focus | Spectrum | Green tones |
+| 🌑 Dark | Circle | Purple tones |
+
+### Visualization Modes
+
+| Mode | Description |
+|------|-------------|
+| 📊 Spectrum | Frequency bars mirrored around the center |
+| 🌊 Wave | Oscilloscope-style waveform |
+| 🔵 Circle | Radial frequency bars around a pulsing ring |
+| ✨ Particles | Particles that explode from the center on bass hits |
+
+### Sensitivity Slider
+
+Adjust how strongly the visualizer reacts to audio (0.2x – 3.0x) in real time.
+
 ## Voice Commands
 
 Voice control supports **English**, **Russian**, and **Ukrainian**. Toggle the microphone icon in the header to activate.
 
 | Action | EN | RU | UK |
 |--------|----|----|-----|
-| Play track | `play <query>` | `играй / включи <query>` | `грай / увімкни <query>` |
-| Pause | `pause / stop` | `пауза / стоп` | `зупини` |
-| Next track | `next` | `следующий / далее` | `наступний / далі` |
-| Previous | `previous / back` | `назад / предыдущий` | `попередній` |
-| Favorite | `favorite` | `в избранное` | `до улюблених` |
-| Record | `start recording / stop recording` | `начать запись / остановить запись` | `почати запис / зупинити запис` |
-| Create playlist | `create <desc> playlist for <duration>` | `создай плейлист` | `зроби плейлист` |
+| Play track | `play / start / launch / open / put on / turn on <query>` | `играй / включи / поставь / запусти / воспроизведи <query>` | `грай / увімкни / постав / запусти / відтвори <query>` |
+| Pause | `pause / stop / halt / freeze` | `пауза / стоп / остановить / тишина` | `пауза / стоп / зупини` |
+| Next track | `next / skip / forward` | `следующий / дальше / далее / вперёд / пропусти` | `наступний / далі / вперед / пропусти` |
+| Previous | `previous / back / rewind / prev` | `предыдущий / назад / вернись` | `попередній / назад / поверни` |
+| Favorite | `favorite / like / save` | `в избранное / лайк / сохранить / запомни` | `до улюблених / лайк / зберегти` |
+| Record | `start recording / stop recording / record` | `начать запись / остановить запись / записать` | `почати запис / зупинити запис / записати` |
+| Create playlist | `create / make / generate / build playlist` | `создай / сделай / сгенерируй плейлист` | `зроби / створи / згенеруй плейлист` |
 
 ### AI Playlist Generation
 
@@ -85,10 +121,10 @@ The app runs at `http://localhost:3000`.
 
 ```
 src/
-  components/     UI components (SpotifyPanel, FavoritesPanel, RealTimeRecording, etc.)
-  constants/      Voice command definitions
-  hooks/          useSpotify, useVoiceCommands, useAudioFiles
-  pages/          Main, Auth, Login, Register
+  components/     UI components (SpotifyPanel, FavoritesPanel, RealTimeRecording, studio/, etc.)
+  constants/      Voice commands, studio config
+  hooks/          useSpotify, useVoiceCommands, useAudioFiles, useAudioAnalyzer, useVisualizer
+  pages/          Main, Auth, Login, Register, Studio
   redux/          Store and auth slice
   services/       API client, Spotify service
   types/          TypeScript interfaces

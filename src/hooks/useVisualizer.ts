@@ -113,23 +113,104 @@ function drawCircle(
   ctx.shadowBlur = 0;
 }
 
+// ── PARTICLES ─────────────────────────────────────────────
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number; 
+  hue: number;
+  size: number;
+}
+
+function spawnParticles(
+  particles: Particle[],
+  W: number,
+  H: number,
+  bass: number,
+  volume: number,
+  mood: MoodConfig,
+) {
+  
+  if (bass < 0.15) return;
+
+  const count = Math.floor(bass * 30 + volume * 10);
+
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1 + Math.random() * bass * 6;
+
+    particles.push({
+      x: W / 2 + (Math.random() - 0.5) * 40,
+      y: H / 2 + (Math.random() - 0.5) * 40,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 1,
+      hue: mood.hueBase + Math.random() * mood.hueRange,
+      size: 1.5 + Math.random() * bass * 4,
+    });
+  }
+}
+
+function drawParticles(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  particles: Particle[],
+  bass: number,
+  volume: number,
+  mood: MoodConfig,
+) {
+  spawnParticles(particles, W, H, bass, volume, mood);
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+
+    p.x += p.vx;
+    p.y += p.vy;
+
+    p.vx *= 0.98;
+    p.vy *= 0.98;
+   
+    p.life -= 0.018;
+
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+      continue;
+    }
+
+    // рисуем
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${p.hue}, ${mood.saturation}%, 65%, ${p.life})`;
+    ctx.shadowBlur = 6 + bass * 10;
+    ctx.shadowColor = `rgba(${mood.glowColor}, ${p.life * 0.8})`;
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+}
+
+// ── HOOK ──────────────────────────────────────────────────
 export function useVisualizer(
   getAnalyzerData: () => AudioAnalyzerData,
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
-  sensitivity: number = 1, 
+  sensitivity: number = 1,
 ) {
   const [mode, setMode] = useState<VisualizerMode>("spectrum");
   const [activeMood, setActiveMood] = useState<string>("chill");
   const modeRef = useRef<VisualizerMode>("wave");
   const moodRef = useRef<MoodConfig>(MOODS[0]);
   const sensitivityRef = useRef(sensitivity);
+  const particlesRef = useRef<Particle[]>([]); 
 
-  
   sensitivityRef.current = sensitivity;
 
   const handleModeChange = useCallback((m: VisualizerMode) => {
     modeRef.current = m;
     setMode(m);
+    
+    if (m !== "particles") particlesRef.current = [];
   }, []);
 
   const handleMoodChange = useCallback((mood: MoodConfig) => {
@@ -137,6 +218,7 @@ export function useVisualizer(
     setActiveMood(mood.id);
     modeRef.current = mood.mode;
     setMode(mood.mode);
+    particlesRef.current = [];
   }, []);
 
   const draw = useCallback(() => {
@@ -155,7 +237,6 @@ export function useVisualizer(
     ctx.fillRect(0, 0, W, H);
 
     if (frequencyData.length > 0) {
-      
       const scaledFreq = new Uint8Array(
         frequencyData.map((v) => Math.min(255, v * s)),
       );
@@ -169,6 +250,16 @@ export function useVisualizer(
         drawWave(ctx, W, H, timeData, scaledVolume, mood);
       } else if (currentMode === "circle") {
         drawCircle(ctx, W, H, scaledFreq, scaledBass, scaledVolume, mood);
+      } else if (currentMode === "particles") {
+        drawParticles(
+          ctx,
+          W,
+          H,
+          particlesRef.current,
+          scaledBass,
+          scaledVolume,
+          mood,
+        );
       }
     }
   }, [getAnalyzerData, canvasRef]);

@@ -1,4 +1,4 @@
-export type VisualizerMode = "spectrum" | "wave" | "circle";
+export type VisualizerMode = "spectrum" | "wave" | "circle" | "particles";
 
 export interface MoodConfig {
   id: string;
@@ -28,7 +28,7 @@ export const MOODS: MoodConfig[] = [
     id: "party",
     label: "Party",
     icon: "🔥",
-    mode: "circle",
+    mode: "particles",
     hueBase: 0,
     hueRange: 50,
     saturation: 100,
@@ -63,4 +63,5 @@ export const MODES: { id: VisualizerMode; label: string; icon: string }[] = [
   { id: "spectrum", label: "Spectrum", icon: "📊" },
   { id: "wave", label: "Wave", icon: "🌊" },
   { id: "circle", label: "Circle", icon: "🔵" },
+  { id: "particles", label: "Particles", icon: "✨" },
 ];
