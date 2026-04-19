@@ -13,11 +13,13 @@ const Studio = () => {
   const frameRef = useRef<number>(0);
   const [isListening, setIsListening] = useState(false);
   const [audioSource, setAudioSource] = useState<AudioSource>("microphone");
+  const [sensitivity, setSensitivity] = useState(1);
 
   const { start, stop, getAnalyzerData } = useAudioAnalyzer();
   const { draw, mode, setMode, activeMood, handleMoodChange } = useVisualizer(
     getAnalyzerData,
     canvasRef,
+    sensitivity,
   );
 
   const handleToggle = async () => {
@@ -26,7 +28,7 @@ const Studio = () => {
       cancelAnimationFrame(frameRef.current);
       setIsListening(false);
     } else {
-      await start(audioSource); 
+      await start(audioSource);
       setIsListening(true);
       const loop = () => {
         draw();
@@ -115,6 +117,25 @@ const Studio = () => {
         onChange={handleMoodChange}
       />
       <ModeSwitcher modes={MODES} activeMode={mode} onChange={setMode} />
+
+      {/* Sensitivity */}
+      <div className="flex justify-center items-center gap-3 pt-1 pb-3 px-6">
+        <span className="text-white/20 text-xs uppercase tracking-widest">
+          Sens
+        </span>
+        <input
+          type="range"
+          min={0.2}
+          max={3}
+          step={0.1}
+          value={sensitivity}
+          onChange={(e) => setSensitivity(parseFloat(e.target.value))}
+          className="w-36 accent-white/50 cursor-pointer focus:outline-none"
+        />
+        <span className="text-white/30 text-xs tabular-nums w-8">
+          {sensitivity.toFixed(1)}x
+        </span>
+      </div>
 
       {/* Canvas */}
       <div className="flex-1 relative mx-6 rounded-2xl overflow-hidden border border-white/10">

@@ -1,6 +1,10 @@
 import { useRef, useState, useCallback } from "react";
 import type { AudioAnalyzerData } from "./useAudioAnalyzer";
-import { MOODS, type MoodConfig, type VisualizerMode } from "../constants/studioConfig";
+import {
+  MOODS,
+  type MoodConfig,
+  type VisualizerMode,
+} from "../constants/studioConfig";
 
 // ── SPECTRUM ──────────────────────────────────────────────
 function drawSpectrum(
@@ -112,11 +116,16 @@ function drawCircle(
 export function useVisualizer(
   getAnalyzerData: () => AudioAnalyzerData,
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
+  sensitivity: number = 1, 
 ) {
   const [mode, setMode] = useState<VisualizerMode>("spectrum");
   const [activeMood, setActiveMood] = useState<string>("chill");
   const modeRef = useRef<VisualizerMode>("wave");
   const moodRef = useRef<MoodConfig>(MOODS[0]);
+  const sensitivityRef = useRef(sensitivity);
+
+  
+  sensitivityRef.current = sensitivity;
 
   const handleModeChange = useCallback((m: VisualizerMode) => {
     modeRef.current = m;
@@ -140,18 +149,26 @@ export function useVisualizer(
     const W = canvas.width;
     const H = canvas.height;
     const mood = moodRef.current;
+    const s = sensitivityRef.current;
 
     ctx.fillStyle = `rgba(10, 10, 20, ${mood.bgAlpha})`;
     ctx.fillRect(0, 0, W, H);
 
     if (frequencyData.length > 0) {
+      
+      const scaledFreq = new Uint8Array(
+        frequencyData.map((v) => Math.min(255, v * s)),
+      );
+      const scaledBass = Math.min(1, bass * s);
+      const scaledVolume = Math.min(1, volume * s);
+
       const currentMode = modeRef.current;
       if (currentMode === "spectrum") {
-        drawSpectrum(ctx, W, H, frequencyData, bass, mood);
+        drawSpectrum(ctx, W, H, scaledFreq, scaledBass, mood);
       } else if (currentMode === "wave") {
-        drawWave(ctx, W, H, timeData, volume, mood);
+        drawWave(ctx, W, H, timeData, scaledVolume, mood);
       } else if (currentMode === "circle") {
-        drawCircle(ctx, W, H, frequencyData, bass, volume, mood);
+        drawCircle(ctx, W, H, scaledFreq, scaledBass, scaledVolume, mood);
       }
     }
   }, [getAnalyzerData, canvasRef]);
