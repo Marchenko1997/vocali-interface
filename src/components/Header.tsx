@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { LogOut, User, Mail, Menu, X, Mic, MicOff } from "lucide-react";
 import Logo from "./Logo";
+import { useNavigate } from "react-router-dom";
+import { Sparkles } from "lucide-react";
 
 interface HeaderProps {
   user: { name: string; email: string } | null;
@@ -16,6 +18,7 @@ const Header = ({
   onVoiceToggle,
 }: HeaderProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
@@ -73,6 +76,14 @@ const Header = ({
               )}
             </button>
 
+            <button
+              onClick={() => navigate("/studio")}
+              className="flex items-center space-x-2 px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-medium text-sm transition-all duration-200"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>Studio</span>
+            </button>
+
             {user && (
               <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-2 text-gray-600">
@@ -125,6 +136,17 @@ const Header = ({
                   <span>Voice Commands: Off</span>
                 </>
               )}
+            </button>
+
+            <button
+              onClick={() => {
+                navigate("/studio");
+                setMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-600 font-medium text-sm"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>Studio</span>
             </button>
 
             {user && (

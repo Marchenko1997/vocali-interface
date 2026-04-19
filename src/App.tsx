@@ -9,6 +9,7 @@ import { store } from "./redux/store";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Auth from "./pages/Auth";
 import Main from "./pages/Main";
+import Studio from "./pages/Studio";
 
 function App() {
   return (
@@ -24,6 +25,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Main />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/studio"
+            element={
+              <ProtectedRoute>
+                <Studio />
               </ProtectedRoute>
             }
           />
