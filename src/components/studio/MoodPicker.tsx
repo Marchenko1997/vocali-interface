@@ -7,7 +7,7 @@ interface MoodPickerProps {
 }
 
 export const MoodPicker = ({ moods, activeMood, onChange }: MoodPickerProps) => (
-  <div className="flex justify-center gap-3 pb-2">
+  <div className="flex justify-center gap-3 py-2">
     {moods.map((mood) => (
       <button
         key={mood.id}

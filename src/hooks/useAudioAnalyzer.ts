@@ -9,6 +9,8 @@ export interface AudioAnalyzerData {
   treble: number;
 }
 
+export type AudioSource = "microphone" | "system";
+
 export function useAudioAnalyzer() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -61,35 +63,54 @@ export function useAudioAnalyzer() {
     };
   }, []);
 
-  const start = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-        },
-      });
+ const start = useCallback(async (source: AudioSource = "microphone") => {
+   try {
+     let stream: MediaStream;
 
-      streamRef.current = stream;
-      const audioCtx = new AudioContext();
-      audioCtxRef.current = audioCtx;
+     if (source === "microphone") {
+       stream = await navigator.mediaDevices.getUserMedia({
+         audio: {
+           echoCancellation: false,
+           noiseSuppression: false,
+           autoGainControl: false,
+         },
+       });
+     } else {
+      
+       stream = await navigator.mediaDevices.getDisplayMedia({
+         audio: true,
+         video: true,
+       });
+      
+       stream.getVideoTracks().forEach((t) => t.stop());
 
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 2048;
-      analyser.smoothingTimeConstant = 0.8;
-      analyserRef.current = analyser;
+ 
+       if (stream.getAudioTracks().length === 0) {
+         console.warn("⚠️ No audio track — user didn't check 'Share audio'");
+         return;
+       }
+     }
 
-      const source = audioCtx.createMediaStreamSource(stream);
-      source.connect(analyser);
-      sourceRef.current = source;
+     streamRef.current = stream;
+     const audioCtx = new AudioContext();
+     audioCtxRef.current = audioCtx;
 
-      isActiveRef.current = true;
-      console.log("🎵 Audio analyzer started");
-    } catch (error) {
-      console.error("Microphone access denied:", error);
-    }
-  }, []);
+     const analyser = audioCtx.createAnalyser();
+     analyser.fftSize = 2048;
+     analyser.smoothingTimeConstant = 0.8;
+     analyserRef.current = analyser;
+
+     const source_node = audioCtx.createMediaStreamSource(stream);
+     source_node.connect(analyser);
+    
+     sourceRef.current = source_node;
+
+     isActiveRef.current = true;
+     console.log(`🎵 Audio analyzer started (${source})`);
+   } catch (error) {
+     console.error("Audio access denied:", error);
+   }
+ }, []);
 
   const stop = useCallback(() => {
     isActiveRef.current = false;

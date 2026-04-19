@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Mic, MicOff } from "lucide-react";
-import { useAudioAnalyzer } from "../hooks/useAudioAnalyzer";
+import { useAudioAnalyzer, type AudioSource } from "../hooks/useAudioAnalyzer";
 import { useVisualizer } from "../hooks/useVisualizer";
 import { MOODS, MODES } from "../constants/studioConfig";
 import { MoodPicker } from "../components/studio/MoodPicker";
@@ -12,6 +12,7 @@ const Studio = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<number>(0);
   const [isListening, setIsListening] = useState(false);
+  const [audioSource, setAudioSource] = useState<AudioSource>("microphone");
 
   const { start, stop, getAnalyzerData } = useAudioAnalyzer();
   const { draw, mode, setMode, activeMood, handleMoodChange } = useVisualizer(
@@ -25,7 +26,7 @@ const Studio = () => {
       cancelAnimationFrame(frameRef.current);
       setIsListening(false);
     } else {
-      await start();
+      await start(audioSource); 
       setIsListening(true);
       const loop = () => {
         draw();
@@ -57,16 +58,16 @@ const Studio = () => {
   return (
     <div className="min-h-screen bg-[#0a0a14] flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4">
+      <div className="flex items-center justify-between px-6 py-2 lg:py-4">
         <button
           onClick={() => navigate("/main")}
-          className="flex items-center gap-2 text-white/60 hover:text-white transition-colors focus:outline-none"
+          className="flex items-center gap-1 lg:gap-2 text-white/60 hover:text-white transition-colors focus:outline-none text-sm lg:text-base"
         >
           <ArrowLeft className="w-5 h-5" />
           Back to Vocali
         </button>
         <h1
-          className="text-lg font-semibold tracking-wide"
+          className="text-2xl font-semibold tracking-wide"
           style={{
             background:
               "linear-gradient(90deg, #ff6b35, #f7c948, #4ecb71, #38c8e0, #e040c8)",
@@ -79,6 +80,33 @@ const Studio = () => {
           Vocali Studio
         </h1>
         <div className="w-24" />
+      </div>
+
+      {/* Source Picker */}
+      <div className="flex justify-center gap-2 pt-2 pb-1">
+        {(
+          [
+            { id: "microphone", label: "Microphone", icon: "🎙️" },
+            { id: "system", label: "System Audio", icon: "🖥️" },
+          ] as { id: AudioSource; label: string; icon: string }[]
+        ).map((src) => (
+          <button
+            key={src.id}
+            disabled={isListening}
+            onClick={() => setAudioSource(src.id)}
+            className={`
+              flex items-center gap-2 px-4 py-2 rounded-full text-sm
+              transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
+              ${
+                audioSource === src.id
+                  ? "bg-white/20 text-white border border-white/40"
+                  : "bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 hover:text-white/70"
+              }
+            `}
+          >
+            {src.icon} {src.label}
+          </button>
+        ))}
       </div>
 
       <MoodPicker
@@ -100,9 +128,15 @@ const Studio = () => {
             <p className="text-white/40 text-lg">
               Play music and press the button
             </p>
-            <p className="text-white/20 text-sm">
-              Microphone listens to your speakers
-            </p>
+            {audioSource === "microphone" ? (
+              <p className="text-white/20 text-sm">
+                Microphone listens to your speakers
+              </p>
+            ) : (
+              <p className="text-white/20 text-sm">
+                Select a browser tab with music playing
+              </p>
+            )}
           </div>
         )}
       </div>

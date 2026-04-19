@@ -7,7 +7,7 @@ interface ModeSwitcherProps {
 }
 
 export const ModeSwitcher = ({ modes, activeMode, onChange }: ModeSwitcherProps) => (
-  <div className="flex justify-center gap-2 py-2">
+  <div className="flex justify-center gap-2 pt-1 pb-3">
     {modes.map((m) => (
       <button
         key={m.id}
