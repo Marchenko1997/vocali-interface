@@ -66,6 +66,7 @@ function drawWave(
 }
 
 // ── CIRCLE ────────────────────────────────────────────────
+// Central pulsing ring with radial frequency bars. Ring radius grows with bass.
 function drawCircle(
   ctx: CanvasRenderingContext2D,
   W: number,
@@ -119,7 +120,7 @@ interface Particle {
   y: number;
   vx: number;
   vy: number;
-  life: number; 
+  life: number; // 0..1, decremented each frame
   hue: number;
   size: number;
 }
@@ -132,15 +133,11 @@ function spawnParticles(
   volume: number,
   mood: MoodConfig,
 ) {
-  
   if (bass < 0.15) return;
-
   const count = Math.floor(bass * 30 + volume * 10);
-
   for (let i = 0; i < count; i++) {
     const angle = Math.random() * Math.PI * 2;
     const speed = 1 + Math.random() * bass * 6;
-
     particles.push({
       x: W / 2 + (Math.random() - 0.5) * 40,
       y: H / 2 + (Math.random() - 0.5) * 40,
@@ -166,13 +163,10 @@ function drawParticles(
 
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
-
     p.x += p.vx;
     p.y += p.vy;
-
     p.vx *= 0.98;
     p.vy *= 0.98;
-   
     p.life -= 0.018;
 
     if (p.life <= 0) {
@@ -180,7 +174,6 @@ function drawParticles(
       continue;
     }
 
-    // рисуем
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
     ctx.fillStyle = `hsla(${p.hue}, ${mood.saturation}%, 65%, ${p.life})`;
@@ -189,6 +182,71 @@ function drawParticles(
     ctx.fill();
   }
   ctx.shadowBlur = 0;
+}
+
+// ── BPM DETECTOR ──────────────────────────────────────────
+// Detects beats via local maxima in a sliding bass window.
+// More reliable than threshold crossing when bass is consistently high.
+interface BpmState {
+  history: number[]; // sliding window of bass values
+  lastPeakTime: number;
+  intervals: number[]; // last N inter-peak intervals in ms
+  smoothedBpm: number; // exponentially smoothed result
+}
+
+const PEAK_WINDOW = 5;
+const BPM_MIN_INTERVAL = 300; // ms, ~200 BPM max
+const BPM_MAX_INTERVAL = 1200; // ms, skip the first peak after silence
+const BPM_NOISE_FLOOR = 0.3;
+const BPM_HISTORY_SIZE = 8;
+const BPM_SMOOTH_FACTOR = 0.2; // EMA coefficient
+
+function detectBpm(state: BpmState, bass: number): number {
+  const now = performance.now();
+
+  state.history.push(bass);
+  const windowSize = PEAK_WINDOW * 2 + 1;
+  if (state.history.length > windowSize) state.history.shift();
+  if (state.history.length < windowSize) return Math.round(state.smoothedBpm);
+
+  const center = state.history[PEAK_WINDOW];
+
+  // True local maximum: center is strictly greater than all neighbors
+  const isLocalMax =
+    state.history.slice(0, PEAK_WINDOW).every((v) => center > v) &&
+    state.history.slice(PEAK_WINDOW + 1).every((v) => center > v);
+
+  const aboveNoise = center > BPM_NOISE_FLOOR;
+  const cooldownOk = now - state.lastPeakTime > BPM_MIN_INTERVAL;
+
+  if (isLocalMax && aboveNoise && cooldownOk) {
+    const interval = now - state.lastPeakTime;
+    state.lastPeakTime = now;
+
+    if (interval < BPM_MAX_INTERVAL) {
+      state.intervals.push(interval);
+      if (state.intervals.length > BPM_HISTORY_SIZE) state.intervals.shift();
+
+      if (state.intervals.length >= 3) {
+        const avg =
+          state.intervals.reduce((a, b) => a + b, 0) / state.intervals.length;
+        const raw = 60000 / avg;
+
+        state.smoothedBpm =
+          state.smoothedBpm === 0
+            ? raw
+            : state.smoothedBpm + (raw - state.smoothedBpm) * BPM_SMOOTH_FACTOR;
+      }
+    }
+  }
+
+  // No peaks for 4s — music stopped, reset
+  if (now - state.lastPeakTime > 4000 && state.smoothedBpm > 0) {
+    state.intervals = [];
+    state.smoothedBpm = 0;
+  }
+
+  return Math.round(state.smoothedBpm);
 }
 
 // ── HOOK ──────────────────────────────────────────────────
@@ -202,14 +260,22 @@ export function useVisualizer(
   const modeRef = useRef<VisualizerMode>("wave");
   const moodRef = useRef<MoodConfig>(MOODS[0]);
   const sensitivityRef = useRef(sensitivity);
-  const particlesRef = useRef<Particle[]>([]); 
+  const particlesRef = useRef<Particle[]>([]);
+
+  // BPM state lives in a ref — updated every frame without triggering re-renders
+  const bpmStateRef = useRef<BpmState>({
+    history: [],
+    lastPeakTime: performance.now(),
+    intervals: [],
+    smoothedBpm: 0,
+  });
+  const currentBpmRef = useRef<number>(0);
 
   sensitivityRef.current = sensitivity;
 
   const handleModeChange = useCallback((m: VisualizerMode) => {
     modeRef.current = m;
     setMode(m);
-    
     if (m !== "particles") particlesRef.current = [];
   }, []);
 
@@ -243,6 +309,8 @@ export function useVisualizer(
       const scaledBass = Math.min(1, bass * s);
       const scaledVolume = Math.min(1, volume * s);
 
+      currentBpmRef.current = detectBpm(bpmStateRef.current, scaledBass);
+
       const currentMode = modeRef.current;
       if (currentMode === "spectrum") {
         drawSpectrum(ctx, W, H, scaledFreq, scaledBass, mood);
@@ -264,6 +332,17 @@ export function useVisualizer(
     }
   }, [getAnalyzerData, canvasRef]);
 
+
+  const resetBpm = useCallback(() => {
+    bpmStateRef.current = {
+      history: [],
+      lastPeakTime: performance.now(),
+      intervals: [],
+      smoothedBpm: 0,
+    };
+    currentBpmRef.current = 0;
+  }, []);
+
   return {
     draw,
     mode,
@@ -272,5 +351,7 @@ export function useVisualizer(
     handleMoodChange,
     moodRef,
     modeRef,
+    currentBpmRef,
+    resetBpm,
   };
 }

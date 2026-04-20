@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Mic, MicOff } from "lucide-react";
 import { useAudioAnalyzer, type AudioSource } from "../hooks/useAudioAnalyzer";
@@ -15,21 +15,39 @@ const Studio = () => {
   const [audioSource, setAudioSource] = useState<AudioSource>("microphone");
   const [sensitivity, setSensitivity] = useState(1);
 
+  // BPM отображается в UI — нужен state, но обновляем редко (не каждый кадр)
+  const [displayBpm, setDisplayBpm] = useState<number>(0);
+  // Throttle: обновляем displayBpm не чаще раза в 500мс чтобы не мигал
+  const bpmUpdateTimerRef = useRef<number>(0);
+
   const { start, stop, getAnalyzerData } = useAudioAnalyzer();
-  const { draw, mode, setMode, activeMood, handleMoodChange } = useVisualizer(
-    getAnalyzerData,
-    canvasRef,
-    sensitivity,
-  );
+  const {
+    draw,
+    mode,
+    setMode,
+    activeMood,
+    handleMoodChange,
+    currentBpmRef,
+    resetBpm,
+  } = useVisualizer(getAnalyzerData, canvasRef, sensitivity);
 
   const handleToggle = async () => {
     if (isListening) {
       stop();
       cancelAnimationFrame(frameRef.current);
+      clearInterval(bpmUpdateTimerRef.current);
+      resetBpm(); // сбрасываем BPM детектор
+      setDisplayBpm(0); // сбрасываем отображение
       setIsListening(false);
     } else {
       await start(audioSource);
       setIsListening(true);
+
+      // Читаем BPM из ref каждые 500мс и пишем в state для рендера
+      bpmUpdateTimerRef.current = window.setInterval(() => {
+        setDisplayBpm(currentBpmRef.current);
+      }, 500);
+
       const loop = () => {
         draw();
         frameRef.current = requestAnimationFrame(loop);
@@ -54,22 +72,26 @@ const Studio = () => {
     return () => {
       stop();
       cancelAnimationFrame(frameRef.current);
+      clearInterval(bpmUpdateTimerRef.current);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen bg-[#0a0a14] flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-2 lg:py-4">
+      <div className="grid grid-cols-3 items-center px-6 py-2 lg:py-4">
+     
         <button
           onClick={() => navigate("/main")}
-          className="flex items-center gap-1 lg:gap-2 text-white/60 hover:text-white transition-colors focus:outline-none text-sm lg:text-base"
+          className="flex items-center gap-1 lg:gap-2 text-white/60 hover:text-white transition-colors focus:outline-none text-sm lg:text-base justify-self-start"
         >
           <ArrowLeft className="w-5 h-5" />
           Back to Vocali
         </button>
+
+     
         <h1
-          className="text-2xl font-semibold tracking-wide"
+          className="text-lg lg:text-2xl font-semibold tracking-wide text-center justify-self-center"
           style={{
             background:
               "linear-gradient(90deg, #ff6b35, #f7c948, #4ecb71, #38c8e0, #e040c8)",
@@ -81,7 +103,31 @@ const Studio = () => {
         >
           Vocali Studio
         </h1>
-        <div className="w-24" />
+
+        {/* BPM badge */}
+        <div className="justify-self-end">
+          {isListening && displayBpm > 0 && (
+            <div
+              className="flex items-center gap-1 px-3 py-1 rounded-full border border-white/20 bg-white/5"
+              title="Detected BPM"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              <span className="text-white/70 text-xs tabular-nums font-medium">
+                {displayBpm} BPM
+              </span>
+            </div>
+          )}
+
+          {isListening && displayBpm === 0 && (
+            <div className="flex items-center gap-1 px-3 py-1 rounded-full border border-white/10 bg-white/5">
+              <span className="w-1.5 h-1.5 rounded-full bg-white/20 animate-pulse" />
+              <span className="text-white/30 text-xs">— BPM</span>
+            </div>
+          )}
+
+       
+          {!isListening && <div className="w-20" />}
+        </div>
       </div>
 
       {/* Source Picker */}
@@ -178,13 +224,11 @@ const Studio = () => {
         >
           {isListening ? (
             <>
-              <MicOff className="w-5 h-5" />
-              Stop Visualizer
+              <MicOff className="w-5 h-5" /> Stop Visualizer
             </>
           ) : (
             <>
-              <Mic className="w-5 h-5" />
-              Start Visualizer
+              <Mic className="w-5 h-5" /> Start Visualizer
             </>
           )}
         </button>
