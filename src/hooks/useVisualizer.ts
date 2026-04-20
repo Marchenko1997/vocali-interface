@@ -120,7 +120,7 @@ interface Particle {
   y: number;
   vx: number;
   vy: number;
-  life: number; // 0..1, decremented each frame
+  life: number;
   hue: number;
   size: number;
 }
@@ -184,22 +184,161 @@ function drawParticles(
   ctx.shadowBlur = 0;
 }
 
+// ── TUNNEL ────────────────────────────────────────────────
+// Concentric rings flying toward the viewer from a vanishing point.
+// Ring spacing and speed pulse with bass. Each ring maps to a frequency band.
+function drawTunnel(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  frequencyData: Uint8Array,
+  bass: number,
+  volume: number,
+  mood: MoodConfig,
+  time: number,
+) {
+  const cx = W / 2;
+  const cy = H / 2;
+  const ringCount = 12;
+  const maxRadius = Math.sqrt(cx * cx + cy * cy) * 1.2;
+
+  // Each ring flies outward — offset driven by time and bass kick
+  const speed = 0.4 + bass * 1.2;
+
+  for (let i = 0; i < ringCount; i++) {
+    // Rings are evenly spaced and scroll outward over time
+    const t = (time * speed + i / ringCount) % 1;
+    // Perspective scale: rings near center are small, near edge are large
+    const radius = t * maxRadius;
+    const alpha = t * (0.3 + volume * 0.4);
+
+    // Map ring index to a frequency bucket for color reactivity
+    const freqIndex = Math.floor((i / ringCount) * 64);
+    const freqValue = frequencyData[freqIndex] / 255;
+    const hue = mood.hueBase + t * mood.hueRange + freqValue * 40;
+    const lightness = 35 + freqValue * 35;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `hsla(${hue}, ${mood.saturation}%, ${lightness}%, ${alpha})`;
+    ctx.lineWidth = 1.5 + freqValue * 3;
+    ctx.shadowBlur = 8 + freqValue * 20 + bass * 15;
+    ctx.shadowColor = `rgba(${mood.glowColor}, ${alpha})`;
+    ctx.stroke();
+  }
+
+  // Vanishing point cross-hair that pulses with bass
+  const crossSize = 4 + bass * 12;
+  ctx.strokeStyle = `rgba(${mood.glowColor}, ${0.3 + bass * 0.5})`;
+  ctx.lineWidth = 1;
+  ctx.shadowBlur = bass * 20;
+  ctx.shadowColor = `rgba(${mood.glowColor}, 0.8)`;
+  ctx.beginPath();
+  ctx.moveTo(cx - crossSize, cy);
+  ctx.lineTo(cx + crossSize, cy);
+  ctx.moveTo(cx, cy - crossSize);
+  ctx.lineTo(cx, cy + crossSize);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+}
+
+// ── LISSAJOUS ─────────────────────────────────────────────
+// Classic oscilloscope Lissajous figure: X axis = left channel (even samples),
+// Y axis = right channel (odd samples). When mono, we offset phase by π/2
+// to still get a visible figure. Frequency ratios shift with bass.
+function drawLissajous(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  timeData: Uint8Array,
+  bass: number,
+  volume: number,
+  mood: MoodConfig,
+  time: number,
+) {
+  const cx = W / 2;
+  const cy = H / 2;
+ 
+  const radius = Math.min(W, H) * 0.46;
+  const sampleCount = timeData.length;
+
+  const a = 3;
+  const b = 2 + Math.sin(time * 0.3) * (0.5 + bass * 1.5);
+  const phaseShift = time * 0.5 + bass * Math.PI;
+
+  ctx.beginPath();
+  for (let i = 0; i < sampleCount; i++) {
+    const sample = (timeData[i] - 128) / 128;
+    const t = (i / sampleCount) * Math.PI * 2;
+
+   
+    const amplitude = 0.7 + volume * 0.3;
+    const x = cx + Math.sin(a * t + phaseShift) * radius * amplitude;
+    const y = cy + Math.sin(b * t) * radius * amplitude * 0.85 + sample * radius * 0.15;
+
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+
+  const hue = mood.hueBase + volume * mood.hueRange;
+  // Линия толще — с 1.5 до 2.5 базово
+  ctx.lineWidth = 2.5 + volume * 3;
+  ctx.strokeStyle = `hsla(${hue}, ${mood.saturation}%, 60%, ${0.6 + volume * 0.4})`;
+  ctx.shadowBlur = 16 + volume * 30 + bass * 25;
+  ctx.shadowColor = `rgba(${mood.glowColor}, 0.8)`;
+  ctx.stroke();
+
+ 
+  ctx.beginPath();
+  for (let i = 0; i < sampleCount; i++) {
+    const sample = (timeData[i] - 128) / 128;
+    const t = (i / sampleCount) * Math.PI * 2;
+  
+    const amplitude = 0.5 + volume * 0.25;
+    const x = cx + Math.sin(a * t + phaseShift + 0.5) * radius * amplitude;
+    const y = cy + Math.sin(b * t + 0.3) * radius * amplitude * 0.85 + sample * radius * 0.12;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.lineWidth = 1.5 + volume * 1.5;
+  ctx.strokeStyle = `hsla(${hue + 40}, ${mood.saturation}%, 70%, ${0.25 + volume * 0.25})`;
+  ctx.shadowBlur = 8 + bass * 10;
+  ctx.stroke();
+
+
+  ctx.beginPath();
+  for (let i = 0; i < sampleCount; i++) {
+    const t = (i / sampleCount) * Math.PI * 2;
+    const amplitude = 0.72 + volume * 0.28;
+    const x = cx + Math.sin(a * t + phaseShift - 0.3) * radius * amplitude;
+    const y = cy + Math.sin(b * t - 0.2) * radius * amplitude * 0.85;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = `hsla(${hue - 30}, ${mood.saturation}%, 80%, ${0.1 + bass * 0.2})`;
+  ctx.shadowBlur = 4;
+  ctx.stroke();
+
+  ctx.shadowBlur = 0;
+}
+
 // ── BPM DETECTOR ──────────────────────────────────────────
 // Detects beats via local maxima in a sliding bass window.
 // More reliable than threshold crossing when bass is consistently high.
 interface BpmState {
-  history: number[]; // sliding window of bass values
+  history: number[];
   lastPeakTime: number;
-  intervals: number[]; // last N inter-peak intervals in ms
-  smoothedBpm: number; // exponentially smoothed result
+  intervals: number[];
+  smoothedBpm: number;
 }
 
 const PEAK_WINDOW = 5;
-const BPM_MIN_INTERVAL = 300; // ms, ~200 BPM max
-const BPM_MAX_INTERVAL = 1200; // ms, skip the first peak after silence
+const BPM_MIN_INTERVAL = 300;
+const BPM_MAX_INTERVAL = 1200;
 const BPM_NOISE_FLOOR = 0.3;
 const BPM_HISTORY_SIZE = 8;
-const BPM_SMOOTH_FACTOR = 0.2; // EMA coefficient
+const BPM_SMOOTH_FACTOR = 0.2;
 
 function detectBpm(state: BpmState, bass: number): number {
   const now = performance.now();
@@ -211,7 +350,6 @@ function detectBpm(state: BpmState, bass: number): number {
 
   const center = state.history[PEAK_WINDOW];
 
-  // True local maximum: center is strictly greater than all neighbors
   const isLocalMax =
     state.history.slice(0, PEAK_WINDOW).every((v) => center > v) &&
     state.history.slice(PEAK_WINDOW + 1).every((v) => center > v);
@@ -240,7 +378,6 @@ function detectBpm(state: BpmState, bass: number): number {
     }
   }
 
-  // No peaks for 4s — music stopped, reset
   if (now - state.lastPeakTime > 4000 && state.smoothedBpm > 0) {
     state.intervals = [];
     state.smoothedBpm = 0;
@@ -262,7 +399,9 @@ export function useVisualizer(
   const sensitivityRef = useRef(sensitivity);
   const particlesRef = useRef<Particle[]>([]);
 
-  // BPM state lives in a ref — updated every frame without triggering re-renders
+  // Tunnel and Lissajous need a continuous time counter for animation
+  const timeRef = useRef<number>(0);
+
   const bpmStateRef = useRef<BpmState>({
     history: [],
     lastPeakTime: performance.now(),
@@ -299,6 +438,9 @@ export function useVisualizer(
     const mood = moodRef.current;
     const s = sensitivityRef.current;
 
+    // Advance time counter — used by tunnel and lissajous for smooth animation
+    timeRef.current += 0.016;
+
     ctx.fillStyle = `rgba(10, 10, 20, ${mood.bgAlpha})`;
     ctx.fillRect(0, 0, W, H);
 
@@ -312,6 +454,8 @@ export function useVisualizer(
       currentBpmRef.current = detectBpm(bpmStateRef.current, scaledBass);
 
       const currentMode = modeRef.current;
+      const t = timeRef.current;
+
       if (currentMode === "spectrum") {
         drawSpectrum(ctx, W, H, scaledFreq, scaledBass, mood);
       } else if (currentMode === "wave") {
@@ -328,10 +472,13 @@ export function useVisualizer(
           scaledVolume,
           mood,
         );
+      } else if (currentMode === "tunnel") {
+        drawTunnel(ctx, W, H, scaledFreq, scaledBass, scaledVolume, mood, t);
+      } else if (currentMode === "lissajous") {
+        drawLissajous(ctx, W, H, timeData, scaledBass, scaledVolume, mood, t);
       }
     }
   }, [getAnalyzerData, canvasRef]);
-
 
   const resetBpm = useCallback(() => {
     bpmStateRef.current = {

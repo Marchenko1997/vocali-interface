@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState} from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Mic, MicOff } from "lucide-react";
 import { useAudioAnalyzer, type AudioSource } from "../hooks/useAudioAnalyzer";
@@ -15,9 +15,8 @@ const Studio = () => {
   const [audioSource, setAudioSource] = useState<AudioSource>("microphone");
   const [sensitivity, setSensitivity] = useState(1);
 
-  // BPM отображается в UI — нужен state, но обновляем редко (не каждый кадр)
+
   const [displayBpm, setDisplayBpm] = useState<number>(0);
-  // Throttle: обновляем displayBpm не чаще раза в 500мс чтобы не мигал
   const bpmUpdateTimerRef = useRef<number>(0);
 
   const { start, stop, getAnalyzerData } = useAudioAnalyzer();
@@ -36,14 +35,14 @@ const Studio = () => {
       stop();
       cancelAnimationFrame(frameRef.current);
       clearInterval(bpmUpdateTimerRef.current);
-      resetBpm(); // сбрасываем BPM детектор
-      setDisplayBpm(0); // сбрасываем отображение
+      resetBpm(); 
+      setDisplayBpm(0); 
       setIsListening(false);
     } else {
       await start(audioSource);
       setIsListening(true);
 
-      // Читаем BPM из ref каждые 500мс и пишем в state для рендера
+    
       bpmUpdateTimerRef.current = window.setInterval(() => {
         setDisplayBpm(currentBpmRef.current);
       }, 500);
