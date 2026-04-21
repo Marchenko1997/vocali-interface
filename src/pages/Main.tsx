@@ -26,7 +26,6 @@ import { useSpotify } from "../hooks/useSpotify";
 import { useVoiceCommands } from "../hooks/useVoiceCommands";
 import { useAIPlaylist } from "../hooks/useAIPlaylist";
 
-
 const Main = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -46,7 +45,6 @@ const Main = () => {
   const [voiceActive, setVoiceActive] = useState(false);
   const voiceActiveRef = useRef(false);
 
-  // Auth: fetch profile
   useEffect(() => {
     if (
       token &&
@@ -61,7 +59,6 @@ const Main = () => {
     }
   }, [token, isAuthenticated, dispatch]);
 
-  // Auth: redirect if not authenticated
   useEffect(() => {
     if (
       !isAuthenticated ||
@@ -74,7 +71,6 @@ const Main = () => {
     }
   }, [isAuthenticated, token, navigate]);
 
-  // Splash screen timer
   useEffect(() => {
     if (isAuthenticated && token && user) {
       const timer = setTimeout(() => setShowSplash(false), 5000);
@@ -93,26 +89,17 @@ const Main = () => {
     audioBlob?: Blob,
   ) => {
     try {
-      console.log("Real-time transcription completed:", transcriptionText);
-      if (!audioBlob) {
-        console.error("No audio blob available for saving");
-        return;
-      }
-
+      if (!audioBlob) return;
       setSavingRealTimeRecording(true);
-
       const formData = new FormData();
       formData.append("file", audioBlob, "recording.wav");
       formData.append("transcription", transcriptionText);
       formData.append("recordingType", "real-time");
-
       const response = await api.post("/audio/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
       console.log("Real-time recording saved successfully:", response.data);
       await audioFiles.fetchAudioFiles(1);
-
       Notify.success("Recording saved successfully!", {
         position: "center-top",
         timeout: 3000,
@@ -123,7 +110,6 @@ const Main = () => {
         fontSize: "14px",
       });
     } catch (error: any) {
-      console.error("Failed to save real-time recording:", error);
       Notify.failure(
         "Failed to save recording: " +
           (error.response?.data?.message || error.message),
@@ -146,51 +132,53 @@ const Main = () => {
     console.error("Real-time recording error:", error);
   };
 
-  // Voice commands
-
-const { playByVoice, pauseTrack, playNext, playPrevious, toggleFavorite, selectedTrack } = spotify;
-
+  const {
+    playByVoice,
+    pauseTrack,
+    playNext,
+    playPrevious,
+    toggleFavorite,
+    selectedTrack,
+  } = spotify;
   const { generatePlaylist, isGenerating, queue } = useAIPlaylist();
+
+  const { startListening, stopListening } = useVoiceCommands({
+    onPlay: (query) => {
+      if (!query) return;
+      setTimeout(() => setShowSpotify(true), 0);
+      playByVoice(query);
+    },
+    onPause: () => {
+      pauseTrack();
+      setTimeout(() => setShowSpotify(false), 0);
+    },
+    onNext: playNext,
+    onPrevious: playPrevious,
+    onFavorite: () => {
+      if (!selectedTrack) return;
+      toggleFavorite(selectedTrack);
+      setTimeout(() => setShowFavorites(true), 0);
+    },
+    onRecord: () => setShowRealTimeRecording((prev) => !prev),
+    onGeneratePlaylist: (prompt) => {
+      generatePlaylist(prompt);
+      setTimeout(() => setShowSpotify(true), 0);
+    },
+  });
+
+  const handleVoiceToggle = () => {
+    if (voiceActiveRef.current) {
+      voiceActiveRef.current = false;
+      setVoiceActive(false);
+      stopListening();
+    } else {
+      voiceActiveRef.current = true;
+      setVoiceActive(true);
+      startListening();
+    }
+  };
+
   
-const { startListening, stopListening } = useVoiceCommands({
-  onPlay: (query) => {
-    if (!query) return;
-    setTimeout(() => setShowSpotify(true), 0);
-    playByVoice(query);
-  },
-  onPause: () => {
-    pauseTrack();
-    setTimeout(() => setShowSpotify(false), 0);
-  },
-  onNext: playNext,
-  onPrevious: playPrevious,
-  onFavorite: () => {
-    if (!selectedTrack) return;
-    toggleFavorite(selectedTrack);
-    setTimeout(() => setShowFavorites(true), 0);
-  },
-  onRecord: () => {
-    setShowRealTimeRecording((prev) => !prev);
-  },
-  onGeneratePlaylist: (prompt) => {
-    generatePlaylist(prompt);
-    setTimeout(() => setShowSpotify(true), 0);
-  },
-});
-
-const handleVoiceToggle = () => {
-  if (voiceActiveRef.current) {
-    voiceActiveRef.current = false;
-    setVoiceActive(false);
-    stopListening();
-  } else {
-    voiceActiveRef.current = true;
-    setVoiceActive(true);
-    startListening();
-  }
-};
-
-  // Loading states
   if (
     loading &&
     !user &&
@@ -200,10 +188,13 @@ const handleVoiceToggle = () => {
     token !== "null"
   ) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div
+        className="min-h-screen flex items-center justify-center transition-colors duration-300"
+        style={{ backgroundColor: "var(--bg-page)" }}
+      >
         <div className="text-center">
-          <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading your profile...</p>
+          <Loader2 className="h-12 w-12 text-blue-500 animate-spin mx-auto mb-4" />
+          <p style={{ color: "var(--text-muted)" }}>Loading your profile...</p>
         </div>
       </div>
     );
@@ -211,14 +202,18 @@ const handleVoiceToggle = () => {
 
   if (!isAuthenticated || !token || token === "undefined" || token === "null") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div
+        className="min-h-screen flex items-center justify-center transition-colors duration-300"
+        style={{ backgroundColor: "var(--bg-page)" }}
+      >
         <div className="text-center">
-          <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Redirecting to login...</p>
+          <Loader2 className="h-12 w-12 text-blue-500 animate-spin mx-auto mb-4" />
+          <p style={{ color: "var(--text-muted)" }}>Redirecting to login...</p>
         </div>
       </div>
     );
   }
+
 
   if (showSplash && isAuthenticated && token && user) {
     return (
@@ -234,7 +229,7 @@ const handleVoiceToggle = () => {
             Your browser does not support the video tag.
           </video>
           <div className="mt-8">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-white text-lg mt-4 font-medium">
               Welcome to Vocali
             </p>
@@ -244,8 +239,12 @@ const handleVoiceToggle = () => {
     );
   }
 
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div
+      className="min-h-screen transition-colors duration-300"
+      style={{ backgroundColor: "var(--bg-page)" }}
+    >
       <Header
         user={user}
         onLogout={handleLogout}
@@ -255,19 +254,30 @@ const handleVoiceToggle = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="space-y-6 sm:space-y-8">
-          {/* Action Cards Grid */}
           <div className="cards grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
             {/* Upload Audio Card */}
-            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow">
+            <div
+              className="rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+              style={{
+                backgroundColor: "var(--bg-card)",
+                boxShadow: "var(--shadow-card)",
+              }}
+            >
               <div className="flex items-start space-x-3 sm:space-x-4">
                 <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex-shrink-0">
                   <Upload className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
+                  <h3
+                    className="text-base sm:text-lg font-semibold mb-2"
+                    style={{ color: "var(--text-primary)" }}
+                  >
                     Upload Audio
                   </h3>
-                  <p className="text-gray-600 mb-3 text-xs sm:text-sm">
+                  <p
+                    className="mb-3 text-xs sm:text-sm"
+                    style={{ color: "var(--text-muted)" }}
+                  >
                     Upload your audio file for voice processing and analysis.
                     Maximum file size: 20 MB.
                   </p>
@@ -286,9 +296,11 @@ const handleVoiceToggle = () => {
                 <button
                   onClick={audioFiles.handleUploadClick}
                   disabled={audioFiles.uploading}
-                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-2 sm:py-3 px-4  hover:scale-[1.01]
-    active:scale-[0.99]
-    transition-all duration-200 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px]"
+                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg
+                    hover:scale-[1.01] active:scale-[0.99] transition-all duration-200
+                    hover:from-blue-600 hover:to-indigo-700
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px] focus:outline-none"
                 >
                   {audioFiles.uploading ? (
                     <>
@@ -303,20 +315,27 @@ const handleVoiceToggle = () => {
                   )}
                 </button>
 
+                {/* Tooltip */}
                 <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
                   <div className="flex items-center space-x-1">
                     <AlertCircle className="h-4 w-4" />
                     <span>Maximum 20 MB audio files</span>
                   </div>
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
                 </div>
               </div>
 
               {audioFiles.uploadError && (
-                <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+                <div
+                  className="mt-3 p-2 rounded-lg border"
+                  style={{
+                    backgroundColor: "rgba(239,68,68,0.08)",
+                    borderColor: "rgba(239,68,68,0.3)",
+                  }}
+                >
                   <div className="flex items-center space-x-2">
                     <AlertCircle className="h-3 w-3 text-red-500 flex-shrink-0" />
-                    <span className="text-xs text-red-600">
+                    <span className="text-xs text-red-500">
                       {audioFiles.uploadError}
                     </span>
                   </div>
@@ -325,54 +344,80 @@ const handleVoiceToggle = () => {
             </div>
 
             {/* Real-Time Recording Card */}
-            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow">
+            <div
+              className="rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+              style={{
+                backgroundColor: "var(--bg-card)",
+                boxShadow: "var(--shadow-card)",
+              }}
+            >
               <div className="flex items-start space-x-3 sm:space-x-4">
                 <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex-shrink-0">
                   <Mic className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
+                  <h3
+                    className="text-base sm:text-lg font-semibold mb-2"
+                    style={{ color: "var(--text-primary)" }}
+                  >
                     Real-Time Recording
                   </h3>
-                  <p className="text-gray-600 mb-3 text-xs sm:text-sm">
+                  <p
+                    className="mb-3 text-xs sm:text-sm"
+                    style={{ color: "var(--text-muted)" }}
+                  >
                     Record audio directly from your microphone with live
                     transcription.
                   </p>
                 </div>
               </div>
-
               <button
                 onClick={() => setShowRealTimeRecording(!showRealTimeRecording)}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg hover:scale-[1.01]
-    active:scale-[0.99] transition-all duration-200 hover:from-purple-600 hover:to-pink-700  flex items-center justify-center space-x-2 text-sm sm:text-base min-h-11"
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold
+                  py-2 sm:py-3 px-4 rounded-lg hover:scale-[1.01] active:scale-[0.99]
+                  transition-all duration-200 hover:from-purple-600 hover:to-pink-700
+                  flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px] focus:outline-none"
               >
                 <Mic className="h-4 w-4" />
-                <span className="">
+                <span>
                   {showRealTimeRecording ? "Hide Recorder" : "Start Recording"}
                 </span>
               </button>
             </div>
 
             {/* Music Control Card */}
-            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow">
+            <div
+              className="rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+              style={{
+                backgroundColor: "var(--bg-card)",
+                boxShadow: "var(--shadow-card)",
+              }}
+            >
               <div className="flex items-start space-x-3 sm:space-x-4">
                 <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-full flex-shrink-0">
                   <Headphones className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
+                  <h3
+                    className="text-base sm:text-lg font-semibold mb-2"
+                    style={{ color: "var(--text-primary)" }}
+                  >
                     Music Control
                   </h3>
-                  <p className="text-gray-600 mb-3 text-xs sm:text-sm">
+                  <p
+                    className="mb-3 text-xs sm:text-sm"
+                    style={{ color: "var(--text-muted)" }}
+                  >
                     Control Spotify with your voice
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowSpotify(!showSpotify)}
-                className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg  hover:scale-[1.01]
-    active:scale-[0.99]
-    transition-all duration-200 hover:from-emerald-600 hover:to-green-700 transition-all duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px]"
+                className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold
+                  py-2 sm:py-3 px-4 rounded-lg hover:scale-[1.01] active:scale-[0.99]
+                  transition-all duration-200 hover:from-emerald-600 hover:to-green-700
+                  flex items-center justify-center space-x-2 text-sm sm:text-base min-h-[44px] focus:outline-none"
               >
                 <Headphones className="h-4 w-4" />
                 <span>
@@ -382,33 +427,38 @@ const handleVoiceToggle = () => {
             </div>
 
             {/* Favorites Card */}
-            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow">
+            <div
+              className="rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+              style={{
+                backgroundColor: "var(--bg-card)",
+                boxShadow: "var(--shadow-card)",
+              }}
+            >
               <div className="flex items-start space-x-3 sm:space-x-4">
-                <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-pink-100 rounded-full">
+                <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-pink-100 rounded-full flex-shrink-0">
                   <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-pink-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
+                  <h3
+                    className="text-base sm:text-lg font-semibold mb-2"
+                    style={{ color: "var(--text-primary)" }}
+                  >
                     Favorites
                   </h3>
-                  <p className="text-gray-600 text-xs sm:text-sm">
+                  <p
+                    className="text-xs sm:text-sm"
+                    style={{ color: "var(--text-muted)" }}
+                  >
                     Your saved tracks
                   </p>
                 </div>
               </div>
-
               <button
                 onClick={() => setShowFavorites(!showFavorites)}
-                className="
-                  w-full mt-3
-                  bg-gradient-to-r from-pink-500 to-rose-600
-                  text-white font-semibold
-                  py-2 sm:py-3 rounded-lg
-                  hover:scale-[1.01]
-                  active:scale-[0.99]
-                  transition-all duration-200
-                  flex items-center justify-center gap-2
-                "
+                className="w-full mt-3 bg-gradient-to-r from-pink-500 to-rose-600 text-white font-semibold
+                  py-2 sm:py-3 rounded-lg hover:scale-[1.01] active:scale-[0.99]
+                  transition-all duration-200 hover:from-pink-600 hover:to-rose-700
+                  flex items-center justify-center gap-2 min-h-[44px] focus:outline-none"
               >
                 <Heart className="h-4 w-4" />
                 {showFavorites ? "Hide Favorites" : "View Favorites"}
@@ -416,16 +466,13 @@ const handleVoiceToggle = () => {
             </div>
           </div>
 
-          {/* Favorites Panel */}
+          {/* ── Favorites Panel ─────────────────────────────── */}
           <div
-            className={`
-    transition-all duration-300 overflow-hidden will-change-transform
-    ${
-      showFavorites
-        ? "opacity-100 translate-y-0 max-h-[500px]"
-        : "opacity-0 -translate-y-2 max-h-0 pointer-events-none"
-    }
-  `}
+            className={`transition-all duration-300 overflow-hidden will-change-transform ${
+              showFavorites
+                ? "opacity-100 translate-y-0 max-h-[500px]"
+                : "opacity-0 -translate-y-2 max-h-0 pointer-events-none"
+            }`}
           >
             <FavoritesPanel
               favorites={spotify.favorites}
@@ -434,25 +481,33 @@ const handleVoiceToggle = () => {
               onRemoveFavorite={spotify.removeFavorite}
             />
           </div>
-          {/* Ai Playlist */}
+
+          {/* ── AI Playlist generating indicator ────────────── */}
           {isGenerating && (
-            <div className="fixed bottom-6 right-6 bg-white rounded-xl shadow-lg p-4 flex items-center gap-3 z-50">
+            <div
+              className="fixed bottom-6 right-6 rounded-xl shadow-lg p-4 flex items-center gap-3 z-50 transition-colors duration-300"
+              style={{
+                backgroundColor: "var(--bg-card)",
+                boxShadow: "var(--shadow-card-hover)",
+              }}
+            >
               <Loader2 className="h-5 w-5 text-green-500 animate-spin" />
-              <span className="text-sm font-medium text-gray-700">
+              <span
+                className="text-sm font-medium"
+                style={{ color: "var(--text-primary)" }}
+              >
                 Generating playlist...
               </span>
             </div>
           )}
-          {/* Spotify Panel */}
+
+          {/* ── Spotify Panel ───────────────────────────────── */}
           <div
-            className={`
-    transition-all duration-300 overflow-hidden
-    ${
-      showSpotify
-        ? "opacity-100 translate-y-0 max-h-[700px]"
-        : "opacity-0 -translate-y-2 max-h-0 pointer-events-none"
-    }
-  `}
+            className={`transition-all duration-300 overflow-hidden ${
+              showSpotify
+                ? "opacity-100 translate-y-0 max-h-[700px]"
+                : "opacity-0 -translate-y-2 max-h-0 pointer-events-none"
+            }`}
           >
             <SpotifyPanel
               spotifyQuery={spotify.spotifyQuery}
@@ -475,16 +530,13 @@ const handleVoiceToggle = () => {
             />
           </div>
 
-          {/* Real-Time Recording */}
+          {/* ── Real-Time Recording panel ────────────────────── */}
           <div
-            className={`
-    transition-all duration-300 overflow-hidden will-change-transform
-    ${
-      showRealTimeRecording
-        ? "opacity-100 translate-y-0 max-h-[500px]"
-        : "opacity-0 -translate-y-2 max-h-0 pointer-events-none"
-    }
-  `}
+            className={`transition-all duration-300 overflow-hidden will-change-transform ${
+              showRealTimeRecording
+                ? "opacity-100 translate-y-0 max-h-[900px]"
+                : "opacity-0 -translate-y-2 max-h-0 pointer-events-none"
+            }`}
           >
             <div className="max-w-2xl mx-auto">
               <RealTimeRecording
@@ -495,7 +547,7 @@ const handleVoiceToggle = () => {
             </div>
           </div>
 
-          {/* Audio Files List */}
+          {/* ── Audio Files List ─────────────────────────────── */}
           <AudioFilesList
             audioFiles={audioFiles.audioFiles}
             loadingFiles={audioFiles.loadingFiles}

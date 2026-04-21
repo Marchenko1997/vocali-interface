@@ -1,6 +1,6 @@
 import { Loader2, Music, Search } from "lucide-react";
 import TrackItem from "./TrackItem";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 interface SpotifyPanelProps {
   spotifyQuery: string;
@@ -39,25 +39,27 @@ const SpotifyPanel = ({
   loadMore,
   hasMore,
   aiQueue = [],
-  
 }: SpotifyPanelProps) => {
   const listRef = useRef<HTMLDivElement | null>(null);
+  const [inputFocused, setInputFocused] = useState(false);
 
   const handleScroll = () => {
     if (!listRef.current || !hasMore) return;
-
     const { scrollTop, scrollHeight, clientHeight } = listRef.current;
-
     if (scrollTop + clientHeight >= scrollHeight - 50) {
-      if (!loadingSpotify) {
-        loadMore();
-      }
+      if (!loadingSpotify) loadMore();
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+      <div
+        className="rounded-xl p-4 sm:p-6 transition-colors duration-300"
+        style={{
+          backgroundColor: "var(--bg-card)",
+          boxShadow: "var(--shadow-card)",
+        }}
+      >
         <div className="space-y-4">
           {/* Search input */}
           <div className="relative">
@@ -67,20 +69,25 @@ const SpotifyPanel = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter") onSearch();
               }}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
               placeholder="Search music..."
-              className="
-                w-full pl-11 pr-4 py-3
-                rounded-xl border border-gray-200
-                bg-gray-50
-                focus:bg-white focus:border-green-400
-                focus:ring-2 focus:ring-green-100
-                outline-none
-                text-sm text-gray-700
-                placeholder:text-gray-400
-                transition-all duration-200
-              "
+              className="w-full pl-11 pr-4 py-3 rounded-xl text-sm outline-none transition-all duration-200"
+              style={{
+                backgroundColor: "var(--bg-card-hover)",
+                border: inputFocused
+                  ? "1px solid rgba(74,222,128,0.6)"
+                  : "1px solid var(--border-color)",
+                boxShadow: inputFocused
+                  ? "0 0 0 3px rgba(74,222,128,0.12)"
+                  : "none",
+                color: "var(--text-primary)",
+              }}
             />
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <div
+              className="absolute left-3 top-1/2 -translate-y-1/2"
+              style={{ color: "var(--text-faint)" }}
+            >
               <Music className="w-4 h-4" />
             </div>
           </div>
@@ -88,33 +95,25 @@ const SpotifyPanel = ({
           {/* Search button */}
           <button
             onClick={onSearch}
-            className="
-              w-full
-              bg-gradient-to-r from-green-500 to-emerald-600
-              text-white font-semibold
-              py-3 rounded-xl
-              shadow-md
-              hover:shadow-lg
-              hover:scale-[1.01]
-              active:scale-[0.99]
-              transition-all duration-200
-              flex items-center justify-center gap-2
-            "
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold
+              py-3 rounded-xl shadow-md hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]
+              transition-all duration-200 flex items-center justify-center gap-2"
           >
             <Search className="w-4 h-4" />
             Search Music
           </button>
         </div>
 
-        {/* AI Queue ИЛИ результаты поиска — взаимоисключающие */}
+        {/* AI Queue OR Search Results */}
         {aiQueue.length > 0 ? (
-          // AI Playlist
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <p
+                className="text-xs font-semibold uppercase tracking-wide"
+                style={{ color: "var(--text-faint)" }}
+              >
                 AI Playlist · {aiQueue.length} tracks
               </p>
-              {/* кнопка очистить плейлист — опционально */}
             </div>
             <div className="space-y-2 max-h-64 overflow-y-auto pr-1.5 custom-scroll">
               {aiQueue.map((track, index) => (
@@ -140,10 +139,12 @@ const SpotifyPanel = ({
           </div>
         ) : loadingSpotify ? (
           <div className="flex justify-center py-4">
-            <Loader2 className="animate-spin text-gray-400" />
+            <Loader2
+              className="animate-spin"
+              style={{ color: "var(--text-faint)" }}
+            />
           </div>
         ) : spotifyResults.length > 0 ? (
-          // Search Results
           <div
             ref={listRef}
             onScroll={handleScroll}
@@ -169,28 +170,39 @@ const SpotifyPanel = ({
               />
             ))}
             {!hasMore && spotifyResults.length > 0 && (
-              <p className="text-center text-xs text-gray-400 py-2">
+              <p
+                className="text-center text-xs py-2"
+                style={{ color: "var(--text-faint)" }}
+              >
                 No more results
               </p>
             )}
           </div>
         ) : hasSearched && spotifyResults.length === 0 ? (
-          <p className="text-center text-sm text-gray-400 pt-4">
+          <p
+            className="text-center text-sm pt-4"
+            style={{ color: "var(--text-faint)" }}
+          >
             No tracks found
           </p>
         ) : null}
 
         {/* Player */}
         <div
-          className={`
-            transition-all duration-300 overflow-hidden
-            ${playerSrc ? "mt-4 max-h-[152px]" : "max-h-0"}
-          `}
+          className={`transition-all duration-300 overflow-hidden ${
+            playerSrc ? "mt-4 max-h-[152px]" : "max-h-0"
+          }`}
         >
           <div className="relative h-[152px]">
             {isPlayerLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded-lg z-10">
-                <Loader2 className="animate-spin text-gray-400" />
+              <div
+                className="absolute inset-0 flex items-center justify-center rounded-lg z-10"
+                style={{ backgroundColor: "rgba(0,0,0,0.15)" }}
+              >
+                <Loader2
+                  className="animate-spin"
+                  style={{ color: "var(--text-faint)" }}
+                />
               </div>
             )}
             {playerSrc && (

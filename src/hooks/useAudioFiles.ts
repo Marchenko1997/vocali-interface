@@ -7,14 +7,43 @@ import type {
   AudioFilesResponse,
 } from "../types/main_interfaces";
 
-const NOTIFY_OPTIONS = {
-  position: "center-top" as const,
-  timeout: 3000,
-  clickToClose: true,
-  pauseOnHover: true,
-  borderRadius: "12px",
-  fontFamily: "Inter, system-ui, sans-serif",
-  fontSize: "14px",
+const getNotifyOptions = () => {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  return {
+    position: "center-top" as const,
+    timeout: 3000,
+    clickToClose: true,
+    pauseOnHover: true,
+    borderRadius: "12px",
+    fontFamily: "Inter, system-ui, sans-serif",
+    fontSize: "14px",
+    ...(isDark && {
+      background: "#1e293b",
+      textColor: "#e2e8f0",
+    }),
+  };
+};
+
+const getConfirmOptions = () => {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  return {
+    titleColor: "#ef4444",
+    okButtonBackground: "#ef4444",
+    okButtonColor: "#ffffff",
+    cancelButtonBackground: isDark ? "#374151" : "#6b7280",
+    cancelButtonColor: "#ffffff",
+    borderRadius: "12px",
+    fontFamily: "Inter, system-ui, sans-serif",
+    titleFontSize: "18px",
+    messageFontSize: "14px",
+    buttonsFontSize: "14px",
+    width: "400px",
+    ...(isDark && {
+      backgroundColor: "#1a1a2e",
+      messageColor: "#cbd5e1",
+      overlayColor: "rgba(0,0,0,0.75)",
+    }),
+  };
 };
 
 export function useAudioFiles(isAuthenticated: boolean, token: string | null) {
@@ -92,7 +121,7 @@ export function useAudioFiles(isAuthenticated: boolean, token: string | null) {
       }
 
       await fetchAudioFiles(1);
-      Notify.success("Audio file uploaded successfully!", NOTIFY_OPTIONS);
+      Notify.success("Audio file uploaded successfully!", getNotifyOptions());
     } catch (error: any) {
       console.error("Upload error:", error.response?.data || error.message);
       const errorMessage =
@@ -101,7 +130,7 @@ export function useAudioFiles(isAuthenticated: boolean, token: string | null) {
         error.message ||
         "Upload failed. Please try again.";
       setUploadError(errorMessage);
-      Notify.failure(errorMessage, { ...NOTIFY_OPTIONS, timeout: 5000 });
+      Notify.failure(errorMessage, { ...getNotifyOptions(), timeout: 5000 });
     } finally {
       setUploading(false);
     }
@@ -132,19 +161,7 @@ export function useAudioFiles(isAuthenticated: boolean, token: string | null) {
         "Cancel",
         () => resolve(true),
         () => resolve(false),
-        {
-          titleColor: "#ef4444",
-          okButtonBackground: "#ef4444",
-          okButtonColor: "#ffffff",
-          cancelButtonBackground: "#6b7280",
-          cancelButtonColor: "#ffffff",
-          borderRadius: "12px",
-          fontFamily: "Inter, system-ui, sans-serif",
-          titleFontSize: "18px",
-          messageFontSize: "14px",
-          buttonsFontSize: "14px",
-          width: "400px",
-        },
+        getConfirmOptions(),
       );
     });
 
@@ -162,13 +179,13 @@ export function useAudioFiles(isAuthenticated: boolean, token: string | null) {
       }
 
       console.log("Audio file deleted successfully:", fileKey);
-      Notify.success("Audio file deleted successfully!", NOTIFY_OPTIONS);
+      Notify.success("Audio file deleted successfully!", getNotifyOptions());
     } catch (error: any) {
       console.error("Failed to delete audio file:", error);
       Notify.failure(
         "Failed to delete file: " +
           (error.response?.data?.message || error.message),
-        { ...NOTIFY_OPTIONS, timeout: 5000 },
+        { ...getNotifyOptions(), timeout: 5000 },
       );
     } finally {
       setDeletingFiles((prev) => {

@@ -47,8 +47,6 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
   const audioChunksRef = useRef<Blob[]>([]);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
-
-
   const startRecording = async () => {
     try {
       setIsConnecting(true);
@@ -60,7 +58,6 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
       setAudioUrl(null);
       setConnectionStatus("connecting");
 
-      // Get microphone access
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -71,41 +68,28 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
       });
 
       streamRef.current = stream;
-
-      // Set up MediaRecorder for audio capture
       mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
       };
 
       mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/wav",
-        });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        setAudioBlob(audioBlob);
-        setAudioUrl(audioUrl);
+        const blob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+        const url = URL.createObjectURL(blob);
+        setAudioBlob(blob);
+        setAudioUrl(url);
         setShowPlayback(true);
       };
 
-      // Start MediaRecorder
       mediaRecorderRef.current.start();
-
-      // Set up audio context and processing
-     audioContextRef.current = new AudioContext();
-     console.log("Real sample rate:", audioContextRef.current.sampleRate);
+      audioContextRef.current = new AudioContext();
       analyserRef.current = audioContextRef.current.createAnalyser();
       microphoneRef.current =
         audioContextRef.current.createMediaStreamSource(stream);
-
-      // Connect microphone to analyser for level meter
       microphoneRef.current.connect(analyserRef.current);
 
-      // Set up analyser for level meter
       analyserRef.current.fftSize = 256;
       const bufferLength = analyserRef.current.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
@@ -119,18 +103,11 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
         }
       };
 
-      // Create AudioWorklet for processing audio data
       const workletCode = `
         class AudioProcessor extends AudioWorkletProcessor {
-          process(inputs, outputs, parameters) {
+          process(inputs) {
             const input = inputs[0];
-            if (input.length > 0) {
-              const inputChannel = input[0];
-              // Send audio data to main thread
-              this.port.postMessage({
-                audioData: inputChannel
-              });
-            }
+            if (input.length > 0) this.port.postMessage({ audioData: input[0] });
             return true;
           }
         }
@@ -140,110 +117,80 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
       const workletBlob = new Blob([workletCode], {
         type: "application/javascript",
       });
-      const workletUrl = URL.createObjectURL(workletBlob);
-
-      await audioContextRef.current.audioWorklet.addModule(workletUrl);
+      await audioContextRef.current.audioWorklet.addModule(
+        URL.createObjectURL(workletBlob),
+      );
 
       workletNodeRef.current = new AudioWorkletNode(
         audioContextRef.current,
         "audio-processor",
       );
 
-    workletNodeRef.current.port.onmessage = (event) => {
-      if (
-        websocketRef.current &&
-        recognitionStartedRef.current &&
-        websocketRef.current.readyState === WebSocket.OPEN
-      ) {
-        try {
-          const float32 = event.data.audioData; 
-
-          const int16 = new Int16Array(float32.length);
-
-          for (let i = 0; i < float32.length; i++) {
-            let s = Math.max(-1, Math.min(1, float32[i]));
-            int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+      workletNodeRef.current.port.onmessage = (event) => {
+        if (
+          websocketRef.current &&
+          recognitionStartedRef.current &&
+          websocketRef.current.readyState === WebSocket.OPEN
+        ) {
+          try {
+            const float32 = event.data.audioData;
+            const int16 = new Int16Array(float32.length);
+            for (let i = 0; i < float32.length; i++) {
+              const s = Math.max(-1, Math.min(1, float32[i]));
+              int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+            }
+            websocketRef.current.send(int16.buffer);
+            audioChunkCountRef.current++;
+          } catch (err) {
+            console.warn("Failed to send audio data:", err);
           }
-
-          websocketRef.current.send(int16.buffer);
-          audioChunkCountRef.current++;
-        } catch (error) {
-          console.warn("Failed to send audio data:", error);
         }
-      }
-    };
+      };
 
-      // Connect the audio processing chain
       microphoneRef.current.connect(workletNodeRef.current);
-     
-
       setIsRecording(true);
       setIsConnecting(false);
       setConnectionStatus("connected");
       updateAudioLevel();
-    } catch (error: any) {
-      setError(error.message || "Failed to start recording");
-      onError(error.message || "Failed to start recording");
+    } catch (err: any) {
+      setError(err.message || "Failed to start recording");
+      onError(err.message || "Failed to start recording");
       setIsConnecting(false);
       setConnectionStatus("error");
     }
   };
 
   const stopRecording = () => {
-    // Stop MediaRecorder
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state === "recording"
-    ) {
+    if (mediaRecorderRef.current?.state === "recording")
       mediaRecorderRef.current.stop();
-    }
 
-    // Wait a moment for any final transcript segments before sending EndOfStream
     setTimeout(() => {
-      // Send EndOfStream message
-      if (
-        websocketRef.current &&
-        websocketRef.current.readyState === WebSocket.OPEN
-      ) {
+      if (websocketRef.current?.readyState === WebSocket.OPEN) {
         websocketRef.current.send(
           JSON.stringify({
             message: "EndOfStream",
             last_seq_no: audioChunkCountRef.current,
           }),
         );
-
-        // Wait a moment for the message to be sent before closing
         setTimeout(() => {
-          if (websocketRef.current) {
-            websocketRef.current.close(1000, "Normal closure");
-            websocketRef.current = null;
-          }
+          websocketRef.current?.close(1000, "Normal closure");
+          websocketRef.current = null;
         }, 100);
       } else if (websocketRef.current) {
         websocketRef.current.close(1000, "Normal closure");
         websocketRef.current = null;
       }
-    }, 3000); // Wait 3 seconds for final transcript segments
+    }, 3000);
 
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-
-    if (workletNodeRef.current) {
-      workletNodeRef.current.disconnect();
-      workletNodeRef.current = null;
-    }
-
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-
-    if (animationFrameRef.current) {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    workletNodeRef.current?.disconnect();
+    workletNodeRef.current = null;
+    audioContextRef.current?.close();
+    audioContextRef.current = null;
+    if (animationFrameRef.current)
       cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
+    animationFrameRef.current = null;
 
     setIsRecording(false);
     setConnectionStatus("disconnected");
@@ -251,21 +198,19 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
   };
 
   const handlePlayPause = () => {
-    if (audioElementRef.current) {
-      if (isPlaying) {
-        audioElementRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        audioElementRef.current.play();
-        setIsPlaying(true);
-      }
+    if (!audioElementRef.current) return;
+    if (isPlaying) {
+      audioElementRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioElementRef.current.play();
+      setIsPlaying(true);
     }
   };
 
   const handleSave = async () => {
-    if (audioBlob && finalTranscription) {
+    if (audioBlob && finalTranscription)
       await onTranscriptionComplete(finalTranscription, audioBlob);
-    }
   };
 
   const handleRerecord = () => {
@@ -281,28 +226,34 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
     }
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-      if (animationFrameRef.current) {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      audioContextRef.current?.close();
+      if (animationFrameRef.current)
         cancelAnimationFrame(animationFrameRef.current);
-      }
     };
   }, []);
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
+    <div
+      className="rounded-2xl p-4 sm:p-6 transition-colors duration-300"
+      style={{
+        backgroundColor: "var(--bg-card)",
+        boxShadow: "var(--shadow-card)",
+      }}
+    >
       <div className="text-center mb-6">
-        <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
+        <h3
+          className="text-xl sm:text-2xl font-bold mb-2"
+          style={{ color: "var(--text-primary)" }}
+        >
           Real-Time Recording
         </h3>
-        <p className="text-gray-600 text-sm sm:text-base">
+        <p
+          className="text-sm sm:text-base"
+          style={{ color: "var(--text-muted)" }}
+        >
           Record audio with live transcription
         </p>
       </div>
@@ -327,7 +278,6 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
         onRerecord={handleRerecord}
         setFinalTranscription={setFinalTranscription}
         setIsPlaying={setIsPlaying}
-     
         websocketRef={websocketRef}
         recognitionStartedRef={recognitionStartedRef}
         audioChunkCountRef={audioChunkCountRef}
@@ -340,6 +290,44 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
       />
     </div>
   );
+};
+
+// ─── Status badge config ────────────────────────────────────────────────────
+const STATUS_CONFIG: Record<
+  string,
+  { bg: string; border: string; color: string; dot: string }
+> = {
+  connected: {
+    bg: "rgba(34,197,94,0.1)",
+    border: "rgba(34,197,94,0.25)",
+    color: "#16a34a",
+    dot: "bg-green-500 animate-pulse",
+  },
+  connecting: {
+    bg: "rgba(234,179,8,0.1)",
+    border: "rgba(234,179,8,0.25)",
+    color: "#ca8a04",
+    dot: "bg-yellow-500 animate-pulse",
+  },
+  error: {
+    bg: "rgba(239,68,68,0.1)",
+    border: "rgba(239,68,68,0.25)",
+    color: "#dc2626",
+    dot: "bg-red-500",
+  },
+  disconnected: {
+    bg: "var(--bg-card-hover)",
+    border: "var(--border-color)",
+    color: "var(--text-muted)",
+    dot: "bg-gray-400",
+  },
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  connected: "Connected",
+  connecting: "Connecting...",
+  error: "Connection Error",
+  disconnected: "Disconnected",
 };
 
 const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
@@ -360,7 +348,6 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
   onRerecord,
   setFinalTranscription,
   setIsPlaying,
-
   websocketRef,
   recognitionStartedRef,
   setTranscription,
@@ -372,24 +359,22 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
   const [isConnectingToSpeechmatics, setIsConnectingToSpeechmatics] =
     useState(false);
 
+  const getSpeechmaticsJWT = async () => {
+    const apiKey = import.meta.env.VITE_SPEECHMATICS_API_KEY;
+    return await createSpeechmaticsJWT({ type: "rt", apiKey, ttl: 60 });
+  };
+
   const handleStartRecording = async () => {
-
-
     setIsConnectingToSpeechmatics(true);
     setConnectionStatus("connecting");
 
     try {
- const jwt = await getSpeechmaticsJWT();
-
- const wsUrl = `wss://eu2.rt.speechmatics.com/v2?jwt=${jwt}`;
- const ws = new WebSocket(wsUrl);
+      const jwt = await getSpeechmaticsJWT();
+      const ws = new WebSocket(`wss://eu2.rt.speechmatics.com/v2?jwt=${jwt}`);
 
       ws.onopen = () => {
-        console.log("WebSocket connected to Speechmatics");
         setConnectionStatus("connected");
         setIsConnectingToSpeechmatics(false);
-
-        // Send configuration message
         ws.send(
           JSON.stringify({
             message: "StartRecognition",
@@ -408,166 +393,121 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
             },
           }),
         );
-
-     
       };
 
-ws.onmessage = (event) => {
-  if (typeof event.data !== "string") return;
+      ws.onmessage = (event) => {
+        if (typeof event.data !== "string") return;
+        const data = JSON.parse(event.data);
 
-  const data = JSON.parse(event.data);
-  console.log("Speechmatics message:", data);
+        if (data.message === "RecognitionStarted") {
+          recognitionStartedRef.current = true;
+          onStartRecording();
+          return;
+        }
+        if (data.message === "AddPartialTranscript") {
+          setTranscription(data.metadata?.transcript || "");
+          return;
+        }
+        if (data.message === "AddTranscript") {
+          const text = data.metadata?.transcript || "";
+          setAccumulatedTranscript((prev: string) =>
+            prev ? prev + " " + text : text,
+          );
+          setFinalTranscription((prev: string) =>
+            prev ? prev + " " + text : text,
+          );
+          return;
+        }
+        if (data.message === "Error")
+          console.error("Speechmatics error:", data);
+      };
 
- 
-  if (data.message === "RecognitionStarted") {
-    recognitionStartedRef.current = true;
-    onStartRecording();
-    return;
-  }
-
- 
-  if (data.message === "AddPartialTranscript") {
-    const text = data.metadata?.transcript || "";
-    setTranscription(text);
-    return;
-  }
-
-
-  if (data.message === "AddTranscript") {
-    const text = data.metadata?.transcript || "";
-
-  setAccumulatedTranscript((prev: string) => (prev ? prev + " " + text : text));
-
-  setFinalTranscription((prev: string) => (prev ? prev + " " + text : text));
-
-    return;
-  }
-
-  if (data.message === "EndOfTranscript") {
-    console.log("Transcript finished");
-    return;
-  }
-
-  if (data.message === "Error") {
-    console.error("Speechmatics error:", data);
-    return;
-  }
-};
-
-      ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
+      ws.onerror = () => {
         setConnectionStatus("error");
         setIsConnectingToSpeechmatics(false);
         onError("Failed to connect to Speechmatics");
       };
 
       ws.onclose = () => {
-        console.log("WebSocket connection closed");
         setConnectionStatus("disconnected");
         recognitionStartedRef.current = false;
       };
-
       websocketRef.current = ws;
-    } catch (error: any) {
-      console.error("Failed to start recording:", error);
+    } catch (err: any) {
       setConnectionStatus("error");
       setIsConnectingToSpeechmatics(false);
-      onError(error.message || "Failed to start recording");
+      onError(err.message || "Failed to start recording");
     }
   };
 
-  const handleStopRecording = () => {
-    onStopRecording();
-  };
-
- const getSpeechmaticsJWT = async () => {
-   const apiKey = import.meta.env.VITE_SPEECHMATICS_API_KEY;
-
-   const jwt = await createSpeechmaticsJWT({
-     type: "rt",
-     apiKey,
-     ttl: 60,
-   });
-
-   return jwt;
- };
-
-
-  const handleSave = async () => {
-    await onSave();
-  };
+  const st = STATUS_CONFIG[connectionStatus] ?? STATUS_CONFIG.disconnected;
 
   return (
     <div className="space-y-6">
-      {/* Error Display */}
+      {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div
+          className="rounded-lg p-4"
+          style={{
+            backgroundColor: "rgba(239,68,68,0.08)",
+            border: "1px solid rgba(239,68,68,0.25)",
+          }}
+        >
           <div className="flex items-center space-x-2">
             <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-            <span className="text-sm text-red-700">{error}</span>
+            <span className="text-sm text-red-500">{error}</span>
           </div>
         </div>
       )}
 
-      {/* Connection Status */}
+      {/* Connection status */}
       <div className="flex items-center justify-center">
         <div
-          className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium ${
-            connectionStatus === "connected"
-              ? "bg-green-50 text-green-700 border border-green-200"
-              : connectionStatus === "connecting"
-                ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
-                : connectionStatus === "error"
-                  ? "bg-red-50 text-red-700 border border-red-200"
-                  : "bg-gray-50 text-gray-700 border border-gray-200"
-          }`}
+          className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium"
+          style={{
+            backgroundColor: st.bg,
+            border: `1px solid ${st.border}`,
+            color: st.color,
+          }}
         >
-          <div
-            className={`w-2 h-2 rounded-full ${
-              connectionStatus === "connected"
-                ? "bg-green-500 animate-pulse"
-                : connectionStatus === "connecting"
-                  ? "bg-yellow-500 animate-pulse"
-                  : connectionStatus === "error"
-                    ? "bg-red-500"
-                    : "bg-gray-500"
-            }`}
-          ></div>
-          <span>
-            {connectionStatus === "connected" && "Connected"}
-            {connectionStatus === "connecting" && "Connecting..."}
-            {connectionStatus === "error" && "Connection Error"}
-            {connectionStatus === "disconnected" && "Disconnected"}
-          </span>
+          <div className={`w-2 h-2 rounded-full ${st.dot}`} />
+          <span>{STATUS_LABELS[connectionStatus]}</span>
         </div>
       </div>
 
-      {/* Audio Level Meter */}
+      {/* Audio level meter */}
       {isRecording && (
         <div className="flex items-center justify-center space-x-4">
           <div className="flex items-center space-x-2">
             <Mic className="h-5 w-5 text-red-500 animate-pulse" />
-            <span className="text-sm font-medium text-gray-700">
+            <span
+              className="text-sm font-medium"
+              style={{ color: "var(--text-muted)" }}
+            >
               Recording...
             </span>
           </div>
-          <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="w-32 h-2 rounded-full overflow-hidden"
+            style={{ backgroundColor: "var(--border-color)" }}
+          >
             <div
               className="h-full bg-gradient-to-r from-green-500 to-red-500 transition-all duration-100"
               style={{ width: `${audioLevel * 100}%` }}
-            ></div>
+            />
           </div>
         </div>
       )}
 
-      {/* Recording Controls */}
-      <div className="flex items-center justify-center space-x-4">
+      {/* Record / Stop */}
+      <div className="flex items-center justify-center">
         {!isRecording ? (
           <button
             onClick={handleStartRecording}
             disabled={isConnectingToSpeechmatics}
-            className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-xl hover:scale-[1.01]
-    active:scale-[0.99] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-12 min-w-[120px] justify-center"
+            className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white font-semibold
+              py-3 px-6 rounded-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-200
+              disabled:opacity-50 disabled:cursor-not-allowed min-h-12 min-w-[160px] justify-center focus:outline-none"
           >
             {isConnectingToSpeechmatics ? (
               <>
@@ -583,9 +523,10 @@ ws.onmessage = (event) => {
           </button>
         ) : (
           <button
-            onClick={handleStopRecording}
-            className="flex items-center space-x-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-xl hover:scale-[1.01]
-    active:scale-[0.99] transition-all duration-200 min-h-12 min-w-[120px] justify-center"
+            onClick={onStopRecording}
+            className="flex items-center space-x-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold
+              py-3 px-6 rounded-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-200
+              min-h-12 min-w-[160px] justify-center focus:outline-none"
           >
             <Square className="h-5 w-5" />
             <span>Stop Recording</span>
@@ -593,42 +534,58 @@ ws.onmessage = (event) => {
         )}
       </div>
 
-      {/* Live Transcription */}
+      {/* Live transcription */}
       {transcription && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div
+          className="rounded-lg p-4"
+          style={{
+            backgroundColor: "rgba(59,130,246,0.08)",
+            border: "1px solid rgba(59,130,246,0.2)",
+          }}
+        >
           <div className="flex items-center space-x-2 mb-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium text-blue-800">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            <span className="text-sm font-medium text-blue-500">
               Live Transcription
             </span>
           </div>
-          <p className="text-sm text-gray-700 leading-relaxed">
+          <p
+            className="text-sm leading-relaxed"
+            style={{ color: "var(--text-muted)" }}
+          >
             "{transcription}"
           </p>
         </div>
       )}
 
-      {/* Final Transcription */}
+      {/* Final transcription */}
       {finalTranscription && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm font-medium text-green-800">
-                Final Transcription
-              </span>
-            </div>
+        <div
+          className="rounded-lg p-4"
+          style={{
+            backgroundColor: "rgba(34,197,94,0.08)",
+            border: "1px solid rgba(34,197,94,0.2)",
+          }}
+        >
+          <div className="flex items-center space-x-2 mb-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full" />
+            <span className="text-sm font-medium text-green-500">
+              Final Transcription
+            </span>
           </div>
-          <p className="text-sm text-gray-700 leading-relaxed mb-4">
+          <p
+            className="text-sm leading-relaxed mb-4"
+            style={{ color: "var(--text-muted)" }}
+          >
             "{finalTranscription}"
           </p>
 
-          {/* Playback Controls */}
           {showPlayback && audioUrl && (
             <div className="flex items-center space-x-2">
               <button
                 onClick={onPlayPause}
-                className="flex items-center justify-center space-x-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="flex items-center justify-center space-x-2 bg-blue-500 hover:bg-blue-600
+                  text-white font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 {isPlaying ? (
                   <Pause className="h-4 w-4" />
@@ -648,13 +605,15 @@ ws.onmessage = (event) => {
         </div>
       )}
 
-      {/* Action Buttons */}
+      {/* Save / Re-record */}
       {finalTranscription && (
-        <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
-            onClick={handleSave}
+            onClick={onSave}
             disabled={isSaving}
-            className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] min-w-[120px] justify-center"
+            className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white font-semibold
+              py-3 px-6 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+              min-h-[48px] min-w-[160px] justify-center focus:outline-none"
           >
             {isSaving ? (
               <>
@@ -671,7 +630,8 @@ ws.onmessage = (event) => {
 
           <button
             onClick={onRerecord}
-            className="flex items-center space-x-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 min-h-[48px] min-w-[120px] justify-center"
+            className="flex items-center space-x-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold
+              py-3 px-6 rounded-xl transition-all duration-200 min-h-[48px] min-w-[160px] justify-center focus:outline-none"
           >
             <RotateCcw className="h-5 w-5" />
             <span>Record Again</span>

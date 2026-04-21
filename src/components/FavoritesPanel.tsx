@@ -16,24 +16,38 @@ const FavoritesPanel = ({
 }: FavoritesPanelProps) => {
   return (
     <div className="max-w-2xl mx-auto mt-6">
-      <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+      <div
+        className="rounded-xl p-4 sm:p-6 transition-colors duration-300"
+        style={{
+          backgroundColor: "var(--bg-card)",
+          boxShadow: "var(--shadow-card)",
+        }}
+      >
+       
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-pink-100 rounded-lg">
               <Heart className="w-4 h-4 text-pink-500 fill-pink-500" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-800">
+            <h3
+              className="text-lg font-semibold"
+              style={{ color: "var(--text-primary)" }}
+            >
               Your Favorites
             </h3>
           </div>
 
-          <span className="text-xs text-gray-400">
+          <span className="text-xs" style={{ color: "var(--text-faint)" }}>
             {favorites.length} tracks
           </span>
         </div>
 
+       
         {favorites.length === 0 ? (
-          <p className="text-center text-gray-400 py-6">
+          <p
+            className="text-center py-6 text-sm"
+            style={{ color: "var(--text-faint)" }}
+          >
             You don't have any favorite tracks yet
           </p>
         ) : (

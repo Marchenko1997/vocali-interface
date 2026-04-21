@@ -1,20 +1,24 @@
-import { useRef, useEffect, useState} from "react";
-import { useNavigate } from "react-router-dom";
+import { useRef, useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Mic, MicOff } from "lucide-react";
 import { useAudioAnalyzer, type AudioSource } from "../hooks/useAudioAnalyzer";
 import { useVisualizer } from "../hooks/useVisualizer";
 import { MOODS, MODES } from "../constants/studioConfig";
 import { MoodPicker } from "../components/studio/MoodPicker";
 import { ModeSwitcher } from "../components/studio/ModeSwitcher";
+import logoAnimated from "../assets/logo-vocali-animated.mp4";
 
 const Studio = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<number>(0);
   const [isListening, setIsListening] = useState(false);
   const [audioSource, setAudioSource] = useState<AudioSource>("microphone");
   const [sensitivity, setSensitivity] = useState(1);
-
+  const [showSplash, setShowSplash] = useState(() => {
+    return location.state?.showSplash === true;
+  });
 
   const [displayBpm, setDisplayBpm] = useState<number>(0);
   const bpmUpdateTimerRef = useRef<number>(0);
@@ -35,14 +39,13 @@ const Studio = () => {
       stop();
       cancelAnimationFrame(frameRef.current);
       clearInterval(bpmUpdateTimerRef.current);
-      resetBpm(); 
-      setDisplayBpm(0); 
+      resetBpm();
+      setDisplayBpm(0);
       setIsListening(false);
     } else {
       await start(audioSource);
       setIsListening(true);
 
-    
       bpmUpdateTimerRef.current = window.setInterval(() => {
         setDisplayBpm(currentBpmRef.current);
       }, 500);
@@ -54,6 +57,14 @@ const Studio = () => {
       frameRef.current = requestAnimationFrame(loop);
     }
   };
+
+  useEffect(() => {
+    if (!showSplash) return;
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const resize = () => {
@@ -75,20 +86,42 @@ const Studio = () => {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  if (showSplash) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <video
+            autoPlay
+            muted
+            loop
+            className="w-48 h-48 sm:w-64 sm:h-64 mx-auto max-w-[300px] max-h-[300px]"
+          >
+            <source src={logoAnimated} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <div className="mt-8">
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-white text-lg mt-4 font-medium">
+              Welcome to Vocali Studio
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a14] flex flex-col">
       {/* Header */}
       <div className="grid grid-cols-3 items-center px-6 py-2 lg:py-4">
-     
         <button
-          onClick={() => navigate("/main")}
+          onClick={() => navigate("/")}
           className="flex items-center gap-1 lg:gap-2 text-white/60 hover:text-white transition-colors focus:outline-none text-sm lg:text-base justify-self-start"
         >
           <ArrowLeft className="w-5 h-5" />
           Back to Vocali
         </button>
 
-     
         <h1
           className="text-lg lg:text-2xl font-semibold tracking-wide text-center justify-self-center"
           style={{
@@ -116,15 +149,12 @@ const Studio = () => {
               </span>
             </div>
           )}
-
           {isListening && displayBpm === 0 && (
             <div className="flex items-center gap-1 px-3 py-1 rounded-full border border-white/10 bg-white/5">
               <span className="w-1.5 h-1.5 rounded-full bg-white/20 animate-pulse" />
               <span className="text-white/30 text-xs">— BPM</span>
             </div>
           )}
-
-       
           {!isListening && <div className="w-20" />}
         </div>
       </div>
