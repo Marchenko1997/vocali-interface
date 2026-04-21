@@ -16,23 +16,13 @@ const Studio = () => {
   const [isListening, setIsListening] = useState(false);
   const [audioSource, setAudioSource] = useState<AudioSource>("microphone");
   const [sensitivity, setSensitivity] = useState(1);
-  const [showSplash, setShowSplash] = useState(() => {
-    return location.state?.showSplash === true;
-  });
-
+  const [showSplash, setShowSplash] = useState(() => location.state?.showSplash === true);
   const [displayBpm, setDisplayBpm] = useState<number>(0);
   const bpmUpdateTimerRef = useRef<number>(0);
 
   const { start, stop, getAnalyzerData } = useAudioAnalyzer();
-  const {
-    draw,
-    mode,
-    setMode,
-    activeMood,
-    handleMoodChange,
-    currentBpmRef,
-    resetBpm,
-  } = useVisualizer(getAnalyzerData, canvasRef, sensitivity);
+  const { draw, mode, setMode, activeMood, handleMoodChange, currentBpmRef, resetBpm } =
+    useVisualizer(getAnalyzerData, canvasRef, sensitivity);
 
   const handleToggle = async () => {
     if (isListening) {
@@ -45,11 +35,9 @@ const Studio = () => {
     } else {
       await start(audioSource);
       setIsListening(true);
-
       bpmUpdateTimerRef.current = window.setInterval(() => {
         setDisplayBpm(currentBpmRef.current);
       }, 500);
-
       const loop = () => {
         draw();
         frameRef.current = requestAnimationFrame(loop);
@@ -60,9 +48,7 @@ const Studio = () => {
 
   useEffect(() => {
     if (!showSplash) return;
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 5000);
+    const timer = setTimeout(() => setShowSplash(false), 5000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -90,20 +76,12 @@ const Studio = () => {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <video
-            autoPlay
-            muted
-            loop
-            className="w-48 h-48 sm:w-64 sm:h-64 mx-auto max-w-[300px] max-h-[300px]"
-          >
+          <video autoPlay muted loop className="w-48 h-48 sm:w-64 sm:h-64 mx-auto">
             <source src={logoAnimated} type="video/mp4" />
-            Your browser does not support the video tag.
           </video>
           <div className="mt-8">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-white text-lg mt-4 font-medium">
-              Welcome to Vocali Studio
-            </p>
+            <p className="text-white text-lg mt-4 font-medium">Welcome to Vocali Studio</p>
           </div>
         </div>
       </div>
@@ -111,26 +89,149 @@ const Studio = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a14] flex flex-col">
-      {/* Header */}
-      <div className="grid grid-cols-3 items-center px-6 py-2 lg:py-4">
+    <div
+      className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{ background: "#060611" }}
+    >
+      {/* ── CSS keyframes injected once ── */}
+      <style>{`
+        @keyframes orb-drift {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33%       { transform: translate(30px, -20px) scale(1.05); }
+          66%       { transform: translate(-20px, 15px) scale(0.97); }
+        }
+        @keyframes orb-drift-reverse {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33%       { transform: translate(-25px, 20px) scale(1.03); }
+          66%       { transform: translate(20px, -10px) scale(0.98); }
+        }
+        @keyframes listening-pulse {
+          0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+          50%       { opacity: 0.7; transform: translate(-50%, -50%) scale(1.08); }
+        }
+        @keyframes gradient-shift {
+          0%   { background-position: 0% 50%; }
+          50%  { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes border-glow {
+          0%, 100% { box-shadow: 0 0 20px rgba(168,85,247,0.15), 0 0 60px rgba(168,85,247,0.05); }
+          50%       { box-shadow: 0 0 30px rgba(236,72,153,0.2),  0 0 80px rgba(236,72,153,0.08); }
+        }
+      `}</style>
+
+
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+
+    
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(168,85,247,0) 0px, rgba(168,85,247,0) 39px, rgba(168,85,247,0.8) 39px, rgba(168,85,247,0.8) 40px),
+              linear-gradient(90deg, rgba(168,85,247,0) 0px, rgba(168,85,247,0) 39px, rgba(168,85,247,0.8) 39px, rgba(168,85,247,0.8) 40px)
+            `,
+            backgroundSize: "40px 40px",
+          }}
+        />
+
+ 
+        <div
+          className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full"
+          style={{
+            background: "radial-gradient(circle, rgba(168,85,247,0.2) 0%, rgba(139,92,246,0.08) 50%, transparent 70%)",
+            filter: "blur(50px)",
+            animation: "orb-drift 18s ease-in-out infinite",
+          }}
+        />
+
+        
+        <div
+          className="absolute -top-32 -right-32 w-[420px] h-[420px] rounded-full"
+          style={{
+            background: "radial-gradient(circle, rgba(236,72,153,0.18) 0%, rgba(244,114,182,0.06) 50%, transparent 70%)",
+            filter: "blur(45px)",
+            animation: "orb-drift-reverse 14s ease-in-out infinite",
+          }}
+        />
+
+    
+        <div
+          className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full"
+          style={{
+            background: "radial-gradient(circle, rgba(56,189,248,0.1) 0%, transparent 70%)",
+            filter: "blur(40px)",
+            animation: "orb-drift 22s ease-in-out infinite reverse",
+          }}
+        />
+
+        
+        <div
+          className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-[700px] h-56 rounded-full"
+          style={{
+            background: "radial-gradient(ellipse, rgba(99,102,241,0.14) 0%, transparent 70%)",
+            filter: "blur(55px)",
+          }}
+        />
+
+       
+        {isListening && (
+          <div
+            className="absolute top-1/2 left-1/2 w-[800px] h-[800px] rounded-full"
+            style={{
+              background: "radial-gradient(circle, rgba(168,85,247,0.08) 0%, rgba(236,72,153,0.04) 40%, transparent 65%)",
+              filter: "blur(70px)",
+              animation: "listening-pulse 4s ease-in-out infinite",
+            }}
+          />
+        )}
+
+        
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "linear-gradient(135deg, rgba(168,85,247,0.04) 0%, transparent 40%, rgba(236,72,153,0.03) 100%)",
+          }}
+        />
+      </div>
+
+      {/* ── Header ── */}
+      <div
+        className="relative z-10 grid grid-cols-3 items-center px-6 py-3 lg:py-4"
+        style={{
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          background: "linear-gradient(to bottom, rgba(168,85,247,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          boxShadow: "0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(0,0,0,0.3)",
+        }}
+      >
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-1 lg:gap-2 text-white/60 hover:text-white transition-colors focus:outline-none text-sm lg:text-base justify-self-start"
+          className="flex items-center gap-2 text-sm focus:outline-none group justify-self-start"
+          style={{
+            color: "rgba(255,255,255,0.38)",
+            transition: "color 0.2s ease",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.85)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.38)")}
         >
-          <ArrowLeft className="w-5 h-5" />
-          Back to Vocali
+          <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+          <span>Back to Vocali</span>
         </button>
 
+      
         <h1
-          className="text-lg lg:text-2xl font-semibold tracking-wide text-center justify-self-center"
+          className="text-lg lg:text-xl font-bold tracking-widest uppercase text-center justify-self-center"
           style={{
-            background:
-              "linear-gradient(90deg, #ff6b35, #f7c948, #4ecb71, #38c8e0, #e040c8)",
+            background: "linear-gradient(90deg, #c084fc, #e879f9, #38bdf8, #c084fc)",
+            backgroundSize: "200% auto",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
-            filter: "drop-shadow(0 0 8px rgba(56, 200, 224, 0.4))",
+            animation: "gradient-shift 6s linear infinite",
+            filter: "drop-shadow(0 0 16px rgba(192,132,252,0.55))",
+            letterSpacing: "0.2em",
           }}
         >
           Vocali Studio
@@ -140,124 +241,267 @@ const Studio = () => {
         <div className="justify-self-end">
           {isListening && displayBpm > 0 && (
             <div
-              className="flex items-center gap-1 px-3 py-1 rounded-full border border-white/20 bg-white/5"
-              title="Detected BPM"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold tabular-nums"
+              style={{
+                background: "rgba(74,222,128,0.08)",
+                border: "1px solid rgba(74,222,128,0.3)",
+                color: "rgba(134,239,172,0.95)",
+                backdropFilter: "blur(8px)",
+                boxShadow: "0 0 12px rgba(74,222,128,0.12)",
+              }}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-white/70 text-xs tabular-nums font-medium">
-                {displayBpm} BPM
-              </span>
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-green-400"
+                style={{ animation: "pulse 1s ease-in-out infinite" }}
+              />
+              {displayBpm} BPM
             </div>
           )}
           {isListening && displayBpm === 0 && (
-            <div className="flex items-center gap-1 px-3 py-1 rounded-full border border-white/10 bg-white/5">
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.07)",
+                color: "rgba(255,255,255,0.22)",
+              }}
+            >
               <span className="w-1.5 h-1.5 rounded-full bg-white/20 animate-pulse" />
-              <span className="text-white/30 text-xs">— BPM</span>
+              — BPM
             </div>
           )}
           {!isListening && <div className="w-20" />}
         </div>
       </div>
 
-      {/* Source Picker */}
-      <div className="flex justify-center gap-2 pt-2 pb-1">
+      {/* ── Source Picker ── */}
+      <div className="relative z-10 flex justify-center gap-3 pt-5 pb-1">
         {(
           [
             { id: "microphone", label: "Microphone", icon: "🎙️" },
-            { id: "system", label: "System Audio", icon: "🖥️" },
+            { id: "system",     label: "System Audio", icon: "🖥️" },
           ] as { id: AudioSource; label: string; icon: string }[]
-        ).map((src) => (
-          <button
-            key={src.id}
-            disabled={isListening}
-            onClick={() => setAudioSource(src.id)}
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-full text-sm
-              transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
-              ${
-                audioSource === src.id
-                  ? "bg-white/20 text-white border border-white/40"
-                  : "bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 hover:text-white/70"
-              }
-            `}
+        ).map((src) => {
+          const isActive = audioSource === src.id;
+          return (
+            <button
+              key={src.id}
+              disabled={isListening}
+              onClick={() => setAudioSource(src.id)}
+              className="relative flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium overflow-hidden disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none"
+              style={{
+                transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
+                ...(isActive
+                  ? {
+                      background: "rgba(168,85,247,0.15)",
+                      border: "1px solid rgba(168,85,247,0.45)",
+                      color: "rgba(216,180,254,0.97)",
+                      backdropFilter: "blur(10px)",
+                      WebkitBackdropFilter: "blur(10px)",
+                      boxShadow: "0 0 20px rgba(168,85,247,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
+                    }
+                  : {
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid rgba(255,255,255,0.07)",
+                      color: "rgba(255,255,255,0.3)",
+                    }),
+              }}
+            >
+              {isActive && (
+                <span
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 55%)",
+                  }}
+                />
+              )}
+              <span className="relative z-10">{src.icon}</span>
+              <span className="relative z-10">{src.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Mood + Mode + Sensitivity ── */}
+      <div className="relative z-10">
+        <MoodPicker moods={MOODS} activeMood={activeMood} onChange={handleMoodChange} />
+        <ModeSwitcher modes={MODES} activeMode={mode} onChange={setMode} />
+
+        {/* Sensitivity */}
+        <div className="flex justify-center items-center gap-4 pt-1 pb-4 px-6">
+          <span
+            className="text-xs uppercase tracking-[0.2em]"
+            style={{ color: "rgba(255,255,255,0.18)" }}
           >
-            {src.icon} {src.label}
-          </button>
-        ))}
+            Sens
+          </span>
+          <div className="relative flex items-center">
+            <input
+              type="range"
+              min={0.2}
+              max={3}
+              step={0.1}
+              value={sensitivity}
+              onChange={(e) => setSensitivity(parseFloat(e.target.value))}
+              className="w-32 cursor-pointer focus:outline-none"
+              style={{ accentColor: "#a855f7" }}
+            />
+          </div>
+          <span
+            className="text-xs tabular-nums font-medium w-8"
+            style={{ color: "rgba(168,85,247,0.7)" }}
+          >
+            {sensitivity.toFixed(1)}x
+          </span>
+        </div>
       </div>
 
-      <MoodPicker
-        moods={MOODS}
-        activeMood={activeMood}
-        onChange={handleMoodChange}
-      />
-      <ModeSwitcher modes={MODES} activeMode={mode} onChange={setMode} />
-
-      {/* Sensitivity */}
-      <div className="flex justify-center items-center gap-3 pt-1 pb-3 px-6">
-        <span className="text-white/20 text-xs uppercase tracking-widest">
-          Sens
-        </span>
-        <input
-          type="range"
-          min={0.2}
-          max={3}
-          step={0.1}
-          value={sensitivity}
-          onChange={(e) => setSensitivity(parseFloat(e.target.value))}
-          className="w-36 accent-white/50 cursor-pointer focus:outline-none"
+      {/* ── Canvas — glass frame ── */}
+      <div
+        className="relative z-10 flex-1 mx-4 sm:mx-6 rounded-2xl overflow-hidden"
+        style={{
+          border: "1px solid rgba(255,255,255,0.07)",
+          background: "rgba(10,10,25,0.6)",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+          animation: isListening ? "border-glow 4s ease-in-out infinite" : "none",
+          boxShadow: isListening
+            ? "0 0 50px rgba(168,85,247,0.15), inset 0 0 60px rgba(0,0,0,0.4)"
+            : "0 8px 40px rgba(0,0,0,0.4), inset 0 0 40px rgba(0,0,0,0.3)",
+          transition: "box-shadow 1s ease",
+        }}
+      >
+        {/* Top edge glow line */}
+        <div
+          className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+          style={{
+            background: isListening
+              ? "linear-gradient(90deg, transparent, rgba(168,85,247,0.6), rgba(236,72,153,0.6), transparent)"
+              : "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)",
+            transition: "background 1s ease",
+          }}
         />
-        <span className="text-white/30 text-xs tabular-nums w-8">
-          {sensitivity.toFixed(1)}x
-        </span>
-      </div>
 
-      {/* Canvas */}
-      <div className="flex-1 relative mx-6 rounded-2xl overflow-hidden border border-white/10">
-        <canvas
-          ref={canvasRef}
-          className="w-full h-full"
-          style={{ minHeight: "400px" }}
+     
+        <div
+          className="absolute top-0 left-0 w-24 h-24 pointer-events-none"
+          style={{
+            background: "radial-gradient(circle at top left, rgba(168,85,247,0.22) 0%, transparent 70%)",
+          }}
         />
+        <div
+          className="absolute top-0 right-0 w-20 h-20 pointer-events-none"
+          style={{
+            background: "radial-gradient(circle at top right, rgba(56,189,248,0.12) 0%, transparent 70%)",
+          }}
+        />
+        <div
+          className="absolute bottom-0 right-0 w-24 h-24 pointer-events-none"
+          style={{
+            background: "radial-gradient(circle at bottom right, rgba(236,72,153,0.18) 0%, transparent 70%)",
+          }}
+        />
+        <div
+          className="absolute bottom-0 left-0 w-20 h-20 pointer-events-none"
+          style={{
+            background: "radial-gradient(circle at bottom left, rgba(99,102,241,0.12) 0%, transparent 70%)",
+          }}
+        />
+
+        <canvas ref={canvasRef} className="w-full h-full" style={{ minHeight: "400px" }} />
+
         {!isListening && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 pointer-events-none">
-            <p className="text-white/40 text-lg">
-              Play music and press the button
-            </p>
-            {audioSource === "microphone" ? (
-              <p className="text-white/20 text-sm">
-                Microphone listens to your speakers
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 pointer-events-none">
+            <div
+              className="px-8 py-5 rounded-2xl text-center"
+              style={{
+                background: "rgba(6,6,17,0.7)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                backdropFilter: "blur(16px)",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)",
+              }}
+            >
+              <p
+                className="text-base font-medium mb-1.5"
+                style={{ color: "rgba(255,255,255,0.45)" }}
+              >
+                Play music and press the button
               </p>
-            ) : (
-              <p className="text-white/20 text-sm">
-                Select a browser tab with music playing
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.18)" }}>
+                {audioSource === "microphone"
+                  ? "Microphone listens to your speakers"
+                  : "Select a browser tab with music playing"}
               </p>
-            )}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Toggle button */}
-      <div className="flex justify-center py-8">
+      {/* ── Toggle button ── */}
+      <div className="relative z-10 flex justify-center py-8">
         <button
           onClick={handleToggle}
-          className={`
-            flex items-center gap-3 px-8 py-4 rounded-full font-semibold text-lg
-            transition-all duration-300
-            ${
-              isListening
-                ? "bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30"
-                : "bg-indigo-500/20 border border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/30"
-            }
-          `}
+          className="relative flex items-center gap-3 px-12 py-4 rounded-full font-semibold text-base focus:outline-none overflow-hidden"
+          style={{
+            transition: "all 0.4s cubic-bezier(0.16,1,0.3,1)",
+            ...(isListening
+              ? {
+                  background: "rgba(239,68,68,0.1)",
+                  border: "1px solid rgba(239,68,68,0.4)",
+                  color: "rgba(252,165,165,0.97)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  boxShadow:
+                    "0 0 30px rgba(239,68,68,0.18), 0 0 80px rgba(239,68,68,0.06), inset 0 1px 0 rgba(255,255,255,0.07)",
+                }
+              : {
+                  background: "rgba(168,85,247,0.13)",
+                  border: "1px solid rgba(168,85,247,0.45)",
+                  color: "rgba(216,180,254,0.97)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  boxShadow:
+                    "0 0 40px rgba(168,85,247,0.22), 0 0 100px rgba(168,85,247,0.08), inset 0 1px 0 rgba(255,255,255,0.08)",
+                }),
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "scale(1.04)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = "scale(0.97)";
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.transform = "scale(1.04)";
+          }}
         >
+          {/* Diagonal glass sheen */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.02) 40%, transparent 60%)",
+            }}
+          />
+          {/* Bottom inner shadow */}
+          <div
+            className="absolute bottom-0 left-4 right-4 h-px pointer-events-none"
+            style={{
+              background: "rgba(0,0,0,0.3)",
+            }}
+          />
+
           {isListening ? (
             <>
-              <MicOff className="w-5 h-5" /> Stop Visualizer
+              <MicOff className="w-5 h-5 relative z-10" />
+              <span className="relative z-10 tracking-wide">Stop Visualizer</span>
             </>
           ) : (
             <>
-              <Mic className="w-5 h-5" /> Start Visualizer
+              <Mic className="w-5 h-5 relative z-10" />
+              <span className="relative z-10 tracking-wide">Start Visualizer</span>
             </>
           )}
         </button>
