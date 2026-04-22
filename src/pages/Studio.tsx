@@ -6,7 +6,6 @@ import { useVisualizer } from "../hooks/useVisualizer";
 import { MOODS, MODES } from "../constants/studioConfig";
 import { MoodPicker } from "../components/studio/MoodPicker";
 import { ModeSwitcher } from "../components/studio/ModeSwitcher";
-import logoAnimated from "../assets/logo-vocali-animated.mp4";
 import SplashScreen from "../components/SplashScreen";
 
 const Studio = () => {

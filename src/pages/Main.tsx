@@ -12,7 +12,6 @@ import {
 import { Notify } from "notiflix";
 import { logout, getProfile } from "../redux/slices/authSlice";
 import type { RootState, AppDispatch } from "../redux/store";
-import logoAnimated from "../assets/logo-vocali-animated.mp4";
 import api from "../services/api";
 
 import Header from "../components/Header";
@@ -545,7 +544,7 @@ const Main = () => {
                       }
                     >
                       <Icon
-                        className="h-5 w-5 sm:h-6 sm:w-6"
+                        className={`h-5 w-5 sm:h-6 sm:w-6 ${isDark ? "" : card.lightIconColor}`}
                         style={
                           isDark
                             ? {
@@ -555,11 +554,6 @@ const Main = () => {
                               }
                             : {}
                         }
-                        {...(!isDark
-                          ? {
-                              className: `h-5 w-5 sm:h-6 sm:w-6 ${card.lightIconColor}`,
-                            }
-                          : {})}
                       />
                     </div>
                     <div className="flex-1 min-w-0">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  LogOut, User, Mail, Menu, X, Mic, MicOff, Sun, Moon,
+  LogOut,  Menu, X, Mic, MicOff, Sun, Moon,
 } from "lucide-react";
 import Logo from "./Logo";
 import { useNavigate } from "react-router-dom";
