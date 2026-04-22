@@ -9,6 +9,7 @@ import type {
 
 const getNotifyOptions = () => {
   const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+
   return {
     position: "center-top" as const,
     timeout: 3000,
@@ -17,32 +18,46 @@ const getNotifyOptions = () => {
     borderRadius: "12px",
     fontFamily: "Inter, system-ui, sans-serif",
     fontSize: "14px",
-    ...(isDark && {
-      background: "#1e293b",
-      textColor: "#e2e8f0",
-    }),
+
+    ...(isDark
+      ? {
+          
+           backgroundColor: "rgba(15, 10, 28, 0.95)",
+          textColor: "rgba(220, 210, 255, 0.92)",
+        }
+      : {
+          background: "#ffffff",
+          textColor: "#1e1b2e",
+        }),
   };
 };
-
 const getConfirmOptions = () => {
   const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+
   return {
-    titleColor: "#ef4444",
-    okButtonBackground: "#ef4444",
-    okButtonColor: "#ffffff",
-    cancelButtonBackground: isDark ? "#374151" : "#6b7280",
-    cancelButtonColor: "#ffffff",
-    borderRadius: "12px",
+    titleColor: isDark ? "rgba(252, 165, 165, 0.95)" : "#ef4444",
+    okButtonBackground: isDark ? "rgba(239, 68, 68, 0.2)" : "#ef4444",
+    okButtonColor: isDark ? "rgba(252, 165, 165, 0.95)" : "#ffffff",
+    cancelButtonBackground: isDark ? "rgba(255, 255, 255, 0.07)" : "#6b7280",
+    cancelButtonColor: isDark ? "rgba(200, 180, 255, 0.8)" : "#ffffff",
+    borderRadius: "14px",
     fontFamily: "Inter, system-ui, sans-serif",
     titleFontSize: "18px",
     messageFontSize: "14px",
     buttonsFontSize: "14px",
     width: "400px",
-    ...(isDark && {
-      backgroundColor: "#1a1a2e",
-      messageColor: "#cbd5e1",
-      overlayColor: "rgba(0,0,0,0.75)",
-    }),
+
+    ...(isDark
+      ? {
+          backgroundColor: "rgba(15, 10, 28, 0.95)",
+          messageColor: "rgba(200, 185, 255, 0.8)",
+        
+        }
+      : {
+          backgroundColor: "#ffffff",
+          messageColor: "#374151",
+        
+        }),
   };
 };
 

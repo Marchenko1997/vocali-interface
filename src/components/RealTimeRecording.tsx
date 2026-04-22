@@ -14,6 +14,7 @@ import type {
   RecordingInterfaceProps,
 } from "../types/real_time_recording";
 import { createSpeechmaticsJWT } from "@speechmatics/auth";
+import { useTheme } from "../context/ThemeContext";
 
 const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
   onTranscriptionComplete,
@@ -46,6 +47,9 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
+
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const startRecording = async () => {
     try {
@@ -237,19 +241,77 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
 
   return (
     <div
-      className="rounded-2xl p-4 sm:p-6 transition-colors duration-300"
-      style={{
-        backgroundColor: "var(--bg-card)",
-        boxShadow: "var(--shadow-card)",
-      }}
+      className="rounded-2xl p-4 sm:p-6 transition-all duration-300 relative overflow-hidden"
+      style={
+        isDark
+          ? {
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(239,68,68,0.2)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              boxShadow:
+                "0 4px 32px rgba(0,0,0,0.3), 0 0 40px rgba(239,68,68,0.05), inset 0 1px 0 rgba(255,255,255,0.04)",
+            }
+          : {
+              backgroundColor: "var(--bg-card)",
+              boxShadow: "var(--shadow-card)",
+              border: "1px solid rgba(239,68,68,0.08)",
+            }
+      }
     >
-      <div className="text-center mb-6">
-        <h3
-          className="text-xl sm:text-2xl font-bold mb-2"
-          style={{ color: "var(--text-primary)" }}
-        >
-          Real-Time Recording
-        </h3>
+      {/* Top accent line */}
+      {isDark && (
+        <div
+          className="absolute top-0 left-6 right-6 h-px pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent, rgba(239,68,68,0.5), rgba(168,85,247,0.4), transparent)",
+          }}
+        />
+      )}
+      {/* Corner glow */}
+      {isDark && (
+        <div
+          className="absolute top-0 right-0 w-32 h-32 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle at top right, rgba(239,68,68,0.08) 0%, transparent 70%)",
+          }}
+        />
+      )}
+
+      {/* Header */}
+      <div className="text-center mb-6 relative">
+        <div className="flex items-center justify-center gap-2.5 mb-1">
+          <div
+            className="flex items-center justify-center w-8 h-8 rounded-lg"
+            style={
+              isDark
+                ? {
+                    background: "rgba(239,68,68,0.12)",
+                    border: "1px solid rgba(239,68,68,0.3)",
+                    boxShadow: "0 0 14px rgba(239,68,68,0.15)",
+                  }
+                : {
+                    background: "rgba(239,68,68,0.08)",
+                    border: "1px solid rgba(239,68,68,0.2)",
+                  }
+            }
+          >
+            <Mic
+              className="w-4 h-4"
+              style={{
+                color: isDark ? "rgba(252,165,165,0.95)" : "rgb(220,38,38)",
+              }}
+            />
+          </div>
+          <h3
+            className="text-xl sm:text-2xl font-bold"
+            style={{ color: "var(--text-primary)" }}
+          >
+            Real-Time Recording
+          </h3>
+        </div>
         <p
           className="text-sm sm:text-base"
           style={{ color: "var(--text-muted)" }}
@@ -292,8 +354,38 @@ const RealTimeRecording: React.FC<RealTimeRecordingProps> = ({
   );
 };
 
-// ─── Status badge config ────────────────────────────────────────────────────
-const STATUS_CONFIG: Record<
+// ─── Status badge config ─────────────────────────────────────────────────────
+const STATUS_CONFIG_DARK: Record<
+  string,
+  { bg: string; border: string; color: string; dot: string }
+> = {
+  connected: {
+    bg: "rgba(74,222,128,0.1)",
+    border: "rgba(74,222,128,0.3)",
+    color: "rgba(134,239,172,0.95)",
+    dot: "bg-green-400 animate-pulse",
+  },
+  connecting: {
+    bg: "rgba(251,191,36,0.1)",
+    border: "rgba(251,191,36,0.3)",
+    color: "rgba(253,230,138,0.95)",
+    dot: "bg-yellow-400 animate-pulse",
+  },
+  error: {
+    bg: "rgba(239,68,68,0.1)",
+    border: "rgba(239,68,68,0.3)",
+    color: "rgba(252,165,165,0.95)",
+    dot: "bg-red-400",
+  },
+  disconnected: {
+    bg: "rgba(255,255,255,0.04)",
+    border: "rgba(255,255,255,0.08)",
+    color: "rgba(200,180,255,0.5)",
+    dot: "bg-gray-500",
+  },
+};
+
+const STATUS_CONFIG_LIGHT: Record<
   string,
   { bg: string; border: string; color: string; dot: string }
 > = {
@@ -358,6 +450,13 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
 }) => {
   const [isConnectingToSpeechmatics, setIsConnectingToSpeechmatics] =
     useState(false);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
+  const st = isDark
+    ? (STATUS_CONFIG_DARK[connectionStatus] ?? STATUS_CONFIG_DARK.disconnected)
+    : (STATUS_CONFIG_LIGHT[connectionStatus] ??
+      STATUS_CONFIG_LIGHT.disconnected);
 
   const getSpeechmaticsJWT = async () => {
     const apiKey = import.meta.env.VITE_SPEECHMATICS_API_KEY;
@@ -398,7 +497,6 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
       ws.onmessage = (event) => {
         if (typeof event.data !== "string") return;
         const data = JSON.parse(event.data);
-
         if (data.message === "RecognitionStarted") {
           recognitionStartedRef.current = true;
           onStartRecording();
@@ -432,6 +530,7 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
         setConnectionStatus("disconnected");
         recognitionStartedRef.current = false;
       };
+
       websocketRef.current = ws;
     } catch (err: any) {
       setConnectionStatus("error");
@@ -440,22 +539,36 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
     }
   };
 
-  const st = STATUS_CONFIG[connectionStatus] ?? STATUS_CONFIG.disconnected;
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 relative">
       {/* Error */}
       {error && (
         <div
-          className="rounded-lg p-4"
-          style={{
-            backgroundColor: "rgba(239,68,68,0.08)",
-            border: "1px solid rgba(239,68,68,0.25)",
-          }}
+          className="rounded-xl p-4"
+          style={
+            isDark
+              ? {
+                  background: "rgba(239,68,68,0.08)",
+                  border: "1px solid rgba(239,68,68,0.25)",
+                  backdropFilter: "blur(6px)",
+                }
+              : {
+                  backgroundColor: "rgba(239,68,68,0.06)",
+                  border: "1px solid rgba(239,68,68,0.2)",
+                }
+          }
         >
           <div className="flex items-center space-x-2">
-            <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-            <span className="text-sm text-red-500">{error}</span>
+            <AlertCircle
+              className="h-5 w-5 flex-shrink-0"
+              style={{ color: isDark ? "rgba(252,165,165,0.9)" : "#ef4444" }}
+            />
+            <span
+              className="text-sm"
+              style={{ color: isDark ? "rgba(252,165,165,0.9)" : "#ef4444" }}
+            >
+              {error}
+            </span>
           </div>
         </div>
       )}
@@ -463,11 +576,15 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
       {/* Connection status */}
       <div className="flex items-center justify-center">
         <div
-          className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium"
+          className="flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium"
           style={{
             backgroundColor: st.bg,
             border: `1px solid ${st.border}`,
             color: st.color,
+            boxShadow:
+              isDark && connectionStatus === "connected"
+                ? "0 0 16px rgba(74,222,128,0.12)"
+                : "none",
           }}
         >
           <div className={`w-2 h-2 rounded-full ${st.dot}`} />
@@ -477,9 +594,25 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
 
       {/* Audio level meter */}
       {isRecording && (
-        <div className="flex items-center justify-center space-x-4">
+        <div
+          className="flex items-center justify-center gap-4 px-4 py-3 rounded-xl"
+          style={
+            isDark
+              ? {
+                  background: "rgba(239,68,68,0.06)",
+                  border: "1px solid rgba(239,68,68,0.15)",
+                }
+              : {
+                  background: "rgba(239,68,68,0.04)",
+                  border: "1px solid rgba(239,68,68,0.1)",
+                }
+          }
+        >
           <div className="flex items-center space-x-2">
-            <Mic className="h-5 w-5 text-red-500 animate-pulse" />
+            <Mic
+              className="h-5 w-5 animate-pulse"
+              style={{ color: isDark ? "rgba(252,165,165,0.9)" : "#ef4444" }}
+            />
             <span
               className="text-sm font-medium"
               style={{ color: "var(--text-muted)" }}
@@ -489,11 +622,23 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
           </div>
           <div
             className="w-32 h-2 rounded-full overflow-hidden"
-            style={{ backgroundColor: "var(--border-color)" }}
+            style={{
+              backgroundColor: isDark
+                ? "rgba(255,255,255,0.08)"
+                : "var(--border-color)",
+            }}
           >
             <div
-              className="h-full bg-gradient-to-r from-green-500 to-red-500 transition-all duration-100"
-              style={{ width: `${audioLevel * 100}%` }}
+              className="h-full transition-all duration-100 rounded-full"
+              style={{
+                width: `${audioLevel * 100}%`,
+                background: isDark
+                  ? `linear-gradient(90deg, rgba(52,211,153,0.9), rgba(239,68,68,${0.5 + audioLevel * 0.5}))`
+                  : "linear-gradient(90deg, #22c55e, #ef4444)",
+                boxShadow: isDark
+                  ? `0 0 8px rgba(239,68,68,${audioLevel * 0.6})`
+                  : "none",
+              }}
             />
           </div>
         </div>
@@ -505,9 +650,39 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
           <button
             onClick={handleStartRecording}
             disabled={isConnectingToSpeechmatics}
-            className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white font-semibold
-              py-3 px-6 rounded-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-200
+            className="flex items-center space-x-2 font-semibold py-3 px-6 rounded-xl
+              hover:scale-[1.02] active:scale-[0.98] transition-all duration-200
               disabled:opacity-50 disabled:cursor-not-allowed min-h-12 min-w-[160px] justify-center focus:outline-none"
+            style={
+              isDark
+                ? {
+                    background:
+                      "linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.15))",
+                    border: "1px solid rgba(239,68,68,0.4)",
+                    color: "rgba(252,165,165,0.95)",
+                    boxShadow: "0 0 20px rgba(239,68,68,0.15)",
+                  }
+                : {
+                    background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                    border: "none",
+                    color: "white",
+                    boxShadow: "0 4px 14px rgba(239,68,68,0.35)",
+                  }
+            }
+            onMouseEnter={(e) => {
+              if (!isConnectingToSpeechmatics && isDark) {
+                e.currentTarget.style.boxShadow =
+                  "0 0 28px rgba(239,68,68,0.28)";
+                e.currentTarget.style.borderColor = "rgba(239,68,68,0.6)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (isDark) {
+                e.currentTarget.style.boxShadow =
+                  "0 0 20px rgba(239,68,68,0.15)";
+                e.currentTarget.style.borderColor = "rgba(239,68,68,0.4)";
+              }
+            }}
           >
             {isConnectingToSpeechmatics ? (
               <>
@@ -524,9 +699,23 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
         ) : (
           <button
             onClick={onStopRecording}
-            className="flex items-center space-x-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold
-              py-3 px-6 rounded-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-200
+            className="flex items-center space-x-2 font-semibold py-3 px-6 rounded-xl
+              hover:scale-[1.02] active:scale-[0.98] transition-all duration-200
               min-h-12 min-w-[160px] justify-center focus:outline-none"
+            style={
+              isDark
+                ? {
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    color: "rgba(200,180,255,0.8)",
+                  }
+                : {
+                    background: "linear-gradient(135deg, #6b7280, #4b5563)",
+                    border: "none",
+                    color: "white",
+                    boxShadow: "0 4px 14px rgba(107,114,128,0.3)",
+                  }
+            }
           >
             <Square className="h-5 w-5" />
             <span>Stop Recording</span>
@@ -537,20 +726,41 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
       {/* Live transcription */}
       {transcription && (
         <div
-          className="rounded-lg p-4"
-          style={{
-            backgroundColor: "rgba(59,130,246,0.08)",
-            border: "1px solid rgba(59,130,246,0.2)",
-          }}
+          className="rounded-xl p-4"
+          style={
+            isDark
+              ? {
+                  background: "rgba(59,130,246,0.07)",
+                  border: "1px solid rgba(59,130,246,0.2)",
+                  backdropFilter: "blur(6px)",
+                }
+              : {
+                  backgroundColor: "rgba(59,130,246,0.06)",
+                  border: "1px solid rgba(59,130,246,0.18)",
+                }
+          }
         >
           <div className="flex items-center space-x-2 mb-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-            <span className="text-sm font-medium text-blue-500">
+            <div
+              className="w-2 h-2 rounded-full animate-pulse"
+              style={{
+                backgroundColor: isDark
+                  ? "rgba(96,165,250,0.9)"
+                  : "rgb(37,99,235)",
+                boxShadow: isDark ? "0 0 6px rgba(59,130,246,0.6)" : "none",
+              }}
+            />
+            <span
+              className="text-sm font-medium"
+              style={{
+                color: isDark ? "rgba(96,165,250,0.9)" : "rgb(37,99,235)",
+              }}
+            >
               Live Transcription
             </span>
           </div>
           <p
-            className="text-sm leading-relaxed"
+            className="text-sm leading-relaxed italic"
             style={{ color: "var(--text-muted)" }}
           >
             "{transcription}"
@@ -561,20 +771,41 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
       {/* Final transcription */}
       {finalTranscription && (
         <div
-          className="rounded-lg p-4"
-          style={{
-            backgroundColor: "rgba(34,197,94,0.08)",
-            border: "1px solid rgba(34,197,94,0.2)",
-          }}
+          className="rounded-xl p-4"
+          style={
+            isDark
+              ? {
+                  background: "rgba(52,211,153,0.07)",
+                  border: "1px solid rgba(52,211,153,0.2)",
+                  backdropFilter: "blur(6px)",
+                }
+              : {
+                  backgroundColor: "rgba(34,197,94,0.06)",
+                  border: "1px solid rgba(34,197,94,0.18)",
+                }
+          }
         >
           <div className="flex items-center space-x-2 mb-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full" />
-            <span className="text-sm font-medium text-green-500">
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{
+                backgroundColor: isDark
+                  ? "rgba(52,211,153,0.9)"
+                  : "rgb(22,163,74)",
+                boxShadow: isDark ? "0 0 6px rgba(52,211,153,0.5)" : "none",
+              }}
+            />
+            <span
+              className="text-sm font-medium"
+              style={{
+                color: isDark ? "rgba(110,231,183,0.95)" : "rgb(22,163,74)",
+              }}
+            >
               Final Transcription
             </span>
           </div>
           <p
-            className="text-sm leading-relaxed mb-4"
+            className="text-sm leading-relaxed italic mb-4"
             style={{ color: "var(--text-muted)" }}
           >
             "{finalTranscription}"
@@ -584,8 +815,22 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
             <div className="flex items-center space-x-2">
               <button
                 onClick={onPlayPause}
-                className="flex items-center justify-center space-x-2 bg-blue-500 hover:bg-blue-600
-                  text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="flex items-center justify-center space-x-2 font-medium py-2 px-4 rounded-lg transition-all duration-200 focus:outline-none"
+                style={
+                  isDark
+                    ? {
+                        background: "rgba(59,130,246,0.12)",
+                        border: "1px solid rgba(59,130,246,0.3)",
+                        color: "rgba(96,165,250,0.95)",
+                        boxShadow: "0 0 12px rgba(59,130,246,0.15)",
+                      }
+                    : {
+                        background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+                        border: "none",
+                        color: "white",
+                        boxShadow: "0 4px 12px rgba(59,130,246,0.3)",
+                      }
+                }
               >
                 {isPlaying ? (
                   <Pause className="h-4 w-4" />
@@ -611,9 +856,25 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
           <button
             onClick={onSave}
             disabled={isSaving}
-            className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white font-semibold
-              py-3 px-6 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+            className="flex items-center space-x-2 font-semibold py-3 px-6 rounded-xl transition-all duration-200
+              disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]
               min-h-[48px] min-w-[160px] justify-center focus:outline-none"
+            style={
+              isDark
+                ? {
+                    background:
+                      "linear-gradient(135deg, rgba(52,211,153,0.2), rgba(16,185,129,0.15))",
+                    border: "1px solid rgba(52,211,153,0.35)",
+                    color: "rgba(110,231,183,0.95)",
+                    boxShadow: "0 0 20px rgba(52,211,153,0.12)",
+                  }
+                : {
+                    background: "linear-gradient(135deg, #22c55e, #16a34a)",
+                    border: "none",
+                    color: "white",
+                    boxShadow: "0 4px 14px rgba(34,197,94,0.35)",
+                  }
+            }
           >
             {isSaving ? (
               <>
@@ -630,8 +891,35 @@ const RecordingInterface: React.FC<RecordingInterfaceProps> = ({
 
           <button
             onClick={onRerecord}
-            className="flex items-center space-x-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold
-              py-3 px-6 rounded-xl transition-all duration-200 min-h-[48px] min-w-[160px] justify-center focus:outline-none"
+            className="flex items-center space-x-2 font-semibold py-3 px-6 rounded-xl transition-all duration-200
+              hover:scale-[1.02] active:scale-[0.98] min-h-[48px] min-w-[160px] justify-center focus:outline-none"
+            style={
+              isDark
+                ? {
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(168,85,247,0.2)",
+                    color: "rgba(200,180,255,0.7)",
+                  }
+                : {
+                    background: "linear-gradient(135deg, #6b7280, #4b5563)",
+                    border: "none",
+                    color: "white",
+                    boxShadow: "0 4px 14px rgba(107,114,128,0.25)",
+                  }
+            }
+            onMouseEnter={(e) => {
+              if (isDark) {
+                e.currentTarget.style.borderColor = "rgba(168,85,247,0.35)";
+                e.currentTarget.style.backgroundColor = "rgba(168,85,247,0.08)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (isDark) {
+                e.currentTarget.style.borderColor = "rgba(168,85,247,0.2)";
+                e.currentTarget.style.backgroundColor =
+                  "rgba(255,255,255,0.05)";
+              }
+            }}
           >
             <RotateCcw className="h-5 w-5" />
             <span>Record Again</span>

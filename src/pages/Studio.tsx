@@ -7,6 +7,7 @@ import { MOODS, MODES } from "../constants/studioConfig";
 import { MoodPicker } from "../components/studio/MoodPicker";
 import { ModeSwitcher } from "../components/studio/ModeSwitcher";
 import logoAnimated from "../assets/logo-vocali-animated.mp4";
+import SplashScreen from "../components/SplashScreen";
 
 const Studio = () => {
   const navigate = useNavigate();
@@ -72,55 +73,15 @@ const Studio = () => {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (showSplash) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <video autoPlay muted loop className="w-48 h-48 sm:w-64 sm:h-64 mx-auto">
-            <source src={logoAnimated} type="video/mp4" />
-          </video>
-          <div className="mt-8">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-white text-lg mt-4 font-medium">Welcome to Vocali Studio</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+ if (showSplash) {
+   return <SplashScreen title="Welcome to Vocali Studio" />;
+ }
 
   return (
     <div
       className="min-h-screen flex flex-col relative overflow-hidden"
       style={{ background: "#060611" }}
     >
-      {/* ── CSS keyframes injected once ── */}
-      <style>{`
-        @keyframes orb-drift {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33%       { transform: translate(30px, -20px) scale(1.05); }
-          66%       { transform: translate(-20px, 15px) scale(0.97); }
-        }
-        @keyframes orb-drift-reverse {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33%       { transform: translate(-25px, 20px) scale(1.03); }
-          66%       { transform: translate(20px, -10px) scale(0.98); }
-        }
-        @keyframes listening-pulse {
-          0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
-          50%       { opacity: 0.7; transform: translate(-50%, -50%) scale(1.08); }
-        }
-        @keyframes gradient-shift {
-          0%   { background-position: 0% 50%; }
-          50%  { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        @keyframes border-glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(168,85,247,0.15), 0 0 60px rgba(168,85,247,0.05); }
-          50%       { box-shadow: 0 0 30px rgba(236,72,153,0.2),  0 0 80px rgba(236,72,153,0.08); }
-        }
-      `}</style>
-
-
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
 
     

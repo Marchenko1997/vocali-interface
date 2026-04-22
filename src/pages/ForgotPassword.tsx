@@ -1,18 +1,27 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Mail, ArrowLeft, Loader2 } from "lucide-react";
+import { Mail, ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import { forgotPassword, clearError } from "../redux/slices/authSlice";
 import type { RootState, AppDispatch } from "../redux/store";
 import Logo from "../components/Logo";
 
+const PARTICLES = [
+  { top: "20%", left: "15%", color: "rgba(168,85,247,0.7)",  size: 6, delay: "0s"   },
+  { top: "72%", left: "82%", color: "rgba(236,72,153,0.6)",  size: 4, delay: "1.2s" },
+  { top: "48%", left: "7%",  color: "rgba(96,165,250,0.6)",  size: 5, delay: "0.6s" },
+  { top: "18%", left: "72%", color: "rgba(192,132,252,0.5)", size: 3, delay: "1.8s" },
+  { top: "82%", left: "28%", color: "rgba(59,130,246,0.5)",  size: 4, delay: "0.3s" },
+  { top: "38%", left: "91%", color: "rgba(244,114,182,0.5)", size: 3, delay: "2.1s" },
+];
+
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [sent] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-
   const { loading, error } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
@@ -23,99 +32,126 @@ const ForgotPassword = () => {
     e.preventDefault();
     const result = await dispatch(forgotPassword(email));
     if (forgotPassword.fulfilled.match(result)) {
-       navigate("/auth#reset");
+      navigate("/auth#reset");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
-      {/* Background Logo */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-5">
-        <Logo
-          size="xl"
-          className="h-48 w-48 sm:h-64 sm:w-64 md:h-96 md:w-96 text-white"
-        />
+    <div className="auth-page min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* ── Ambient background ── */}
+      <div className="ambient-bg" aria-hidden="true">
+        <div className="ambient-grid" />
+        <div className="ambient-orb-purple" />
+        <div className="ambient-orb-pink" />
+        <div className="ambient-orb-blue" />
+        <div className="ambient-diagonal-tint" />
+        {PARTICLES.map((p, i) => (
+          <div
+            key={i}
+            className="ambient-particle"
+            style={{
+              top: p.top, left: p.left,
+              width: p.size, height: p.size,
+              background: p.color,
+              boxShadow: `0 0 ${p.size * 3}px ${p.color}`,
+              animationDelay: p.delay,
+            }}
+          />
+        ))}
       </div>
 
-      {/* Floating particles */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-        <div className="absolute top-3/4 right-1/4 w-1 h-1 bg-purple-400 rounded-full animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse delay-500"></div>
-      </div>
+      {/* ── Card ── */}
+      <div className="glass-card relative z-10">
+        <div className="top-accent-line" />
+        <div className="corner-glow" />
 
-      <div className="bg-white/10 backdrop-blur-md rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full border border-white/20 relative z-10">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-6">
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-2xl shadow-lg">
+        {/* ── Header ── */}
+        <div className="text-center mb-8 relative">
+          <div className="flex items-center justify-center mb-5">
+            <div className="logo-ring">
               <Logo size="lg" animated />
             </div>
           </div>
-
-          <h1 className="text-3xl font-bold text-white mb-3">
-            Forgot Password
-          </h1>
-
-          <p className="text-gray-300 text-sm">
+          <h1 className="neon-title text-3xl font-bold mb-2">Forgot Password</h1>
+          <p style={{ color: "rgba(200,180,255,0.55)", fontSize: "14px" }}>
             Enter your email to receive a reset code
           </p>
         </div>
 
+        {/* ── Error ── */}
         {error && (
-          <div className="bg-red-500/20 border border-red-400 text-red-200 px-4 py-3 rounded-xl mb-6">
-            {error}
+          <div className="error-card mb-5">
+            <div className="flex items-center gap-2.5">
+              <AlertCircle className="error-card__text h-4 w-4 flex-shrink-0" />
+              <p className="error-card__text text-sm">{error}</p>
+            </div>
           </div>
         )}
 
+        {/* ── Success state ── */}
         {sent ? (
-          <div className="text-center text-green-300 bg-green-500/20 border border-green-400 rounded-xl p-4 mb-6">
-            Reset code sent to your email.
+          <div
+            className="rounded-xl p-4 mb-5 flex items-center gap-2.5"
+            style={{
+              background: "rgba(52,211,153,0.08)",
+              border: "1px solid rgba(52,211,153,0.25)",
+            }}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0 animate-pulse" />
+            <p className="text-sm" style={{ color: "rgba(110,231,183,0.9)" }}>
+              Reset code sent to your email.
+            </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* ── Email field ── */}
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-3">
-                Email Address
-              </label>
-
+              <label className="form-label">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Mail
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none"
+                  style={{
+                    color: focused
+                      ? "rgba(192,132,252,0.8)"
+                      : "rgba(180,160,255,0.35)",
+                  }}
+                />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onFocus={() => setFocused(true)}
+                  onBlur={() => setFocused(false)}
                   placeholder="Enter your email"
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-600 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-400 transition-all duration-200 bg-white/10 text-white placeholder-gray-400"
+                  className="glass-input"
                 />
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-4 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            {/* ── Submit ── */}
+            <button type="submit" disabled={loading} className="neon-btn">
+              <span className="glass-glare" />
               {loading ? (
-                <div className="flex items-center justify-center">
-                  <Loader2 className="animate-spin h-5 w-5 mr-3" />
-                  Sending...
-                </div>
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin relative z-10" />
+                  <span className="relative z-10 text-sm">Sending...</span>
+                </>
               ) : (
-                "Send Reset Code"
+                <span className="relative z-10">Send Reset Code</span>
               )}
             </button>
           </form>
         )}
 
-        {/* Back */}
-        <div className="mt-8 text-center">
+        {/* ── Footer ── */}
+        <div className="mt-7 text-center">
+          <div className="form-divider" />
           <button
             onClick={() => navigate("/auth")}
-            className="flex items-center justify-center space-x-2 text-gray-400 hover:text-gray-300 transition-colors mx-auto"
+            className="neon-link neon-link--muted flex items-center justify-center gap-2 mx-auto text-xs focus:outline-none"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5" />
             <span>Back to Sign In</span>
           </button>
         </div>
