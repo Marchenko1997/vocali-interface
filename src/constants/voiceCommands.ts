@@ -4,9 +4,17 @@ export const VOICE_COMMANDS = {
     "play",
     "start",
     "launch",
+    "longe",
+    "lunge",
+    "lunch",
+    "lange",
     "open",
     "put on",
     "turn on",
+    "search for",
+    "find",
+    "i want to hear",
+    "play me",
     // Russian
     "играй",
     "включи",
@@ -29,6 +37,10 @@ export const VOICE_COMMANDS = {
     "stop",
     "halt",
     "freeze",
+    "mute",
+    "quiet",
+    "silence",
+    "be quiet",
     // Russian
     "пауза",
     "стоп",
@@ -51,6 +63,10 @@ export const VOICE_COMMANDS = {
     "forward",
     "next track",
     "next song",
+    "next one",
+    "another one",
+    "change song",
+    "change track",
     // Russian
     "следующий",
     "следующая",
@@ -77,6 +93,8 @@ export const VOICE_COMMANDS = {
     "last track",
     "go back",
     "prev",
+    "last one",
+    "that one again",
     // Russian
     "предыдущий",
     "предыдущая",
@@ -95,11 +113,15 @@ export const VOICE_COMMANDS = {
 
   favorite: [
     // English
-    "add to favorites",
+    "save to favorite",
+    "save to favorites",
+    "add to favorite",
     "favorite",
     "like",
     "save",
+    "heart",
     "heart this",
+    "bookmark",
     // Russian
     "добавить в избранное",
     "в избранное",
@@ -114,6 +136,32 @@ export const VOICE_COMMANDS = {
     "подобається",
     "лайк",
     "зберегти",
+  ],
+
+  unfavorite: [
+    // English
+    "remove from favorites",
+    "remove from favorite",
+    "remove favorite",
+    "delete from favorites",
+    "delete favorite",
+    "unfavorite",
+    "unlike",
+    "unheart",
+    "remove bookmark",
+    "unsave",
+    // Russian
+    "удалить из избранного",
+    "убрать из избранного",
+    "удали из избранного",
+    "убери из избранного",
+    "не нравится",
+    "разлюбить",
+    // Ukrainian
+    "видалити з улюблених",
+    "прибрати з улюблених",
+    "видали з улюблених",
+    "не подобається",
   ],
 
   record: [
@@ -169,8 +217,15 @@ export function normalizeText(text: string): string {
 
 const playWords = [...VOICE_COMMANDS.play]
   .sort((a, b) => b.length - a.length)
-  .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) 
+  .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
   .join("|");
+
+function buildAlternation(words: string[]): string {
+  return [...words]
+    .sort((a, b) => b.length - a.length)
+    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|");
+}
 
 
 export const PLAY_REGEX = new RegExp(
@@ -178,15 +233,67 @@ export const PLAY_REGEX = new RegExp(
   "i",
 );
 
+export const PLAY_TRIGGER_ONLY_REGEX = new RegExp(
+  `^(?:${playWords})$`,
+  "i",
+);
+
+export const NEXT_REGEX = new RegExp(
+  `^(?:${buildAlternation(VOICE_COMMANDS.next)})$`,
+  "i",
+);
+
+export const PAUSE_REGEX = new RegExp(
+  `^(?:${buildAlternation(VOICE_COMMANDS.pause)})$`,
+  "i",
+);
+
+export const PREVIOUS_REGEX = new RegExp(
+  `^(?:${buildAlternation(VOICE_COMMANDS.previous)})$`,
+  "i",
+);
+
+export const FAVORITE_REGEX = new RegExp(
+  `^(?:${buildAlternation(VOICE_COMMANDS.favorite)})$`,
+  "i",
+);
+
+export const UNFAVORITE_REGEX = new RegExp(
+  `^(?:${buildAlternation(VOICE_COMMANDS.unfavorite)})$`,
+  "i",
+);
+
+export const RECORD_REGEX = new RegExp(
+  `^(?:${buildAlternation(VOICE_COMMANDS.record)})$`,
+  "i",
+);
+
 
 export const PLAYLIST_REGEX = new RegExp(
   [
- 
+
     "(?:create|make|generate|build|new)\\s+(?:\\w+\\s+)*playlist",
-   
+
     "(?:создай|сделай|сгенерируй|новый)\\s+(?:\\w+\\s+)*плейлист",
-   
+
     "(?:зроби|створи|згенеруй|новий)\\s+(?:\\w+\\s+)*плейлист",
   ].join("|"),
   "i",
 );
+
+const NOISE_PATTERNS: RegExp[] = [
+  /^thanks?(\s+you)?\s+for\s+(watching|listening)\b.*/i,
+  /^teksting\s+av\s+\S+.*/i,
+  /^subtitles?\s+by\s+\S+.*/i,
+  /^takk\s+for\s+at\s+du\s+så\s+med\b.*/i,
+  /^obrigado\b.*/i,
+  /^gracias\b.*/i,
+  /^merci\b.*/i,
+];
+
+export function cleanTranscript(text: string): string {
+  for (const pattern of NOISE_PATTERNS) {
+    if (pattern.test(text)) return "";
+  }
+  return text;
+}

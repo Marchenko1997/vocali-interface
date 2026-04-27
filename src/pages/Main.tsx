@@ -204,23 +204,20 @@ const { log, addEntry } = useVoiceLog();
   const { generatePlaylist, isGenerating, queue } = useAIPlaylist();
 
   const { startListening, stopListening } = useVoiceCommands({
+    onTranscript: (text) => addEntry(text, "command"),
     onPlay: (query) => {
       if (!query) return;
-      addEntry(`play ${query}`, "command");
       setTimeout(() => setShowSpotify(true), 0);
       playByVoice(query);
     },
     onPause: () => {
-      addEntry("pause", "command");
       pauseTrack();
       setTimeout(() => setShowSpotify(false), 0);
     },
     onNext: () => {
-      addEntry("next track", "command");
       playNext();
     },
     onPrevious: () => {
-      addEntry("previous track", "command");
       playPrevious();
     },
     onFavorite: () => {
@@ -230,11 +227,9 @@ const { log, addEntry } = useVoiceLog();
       setTimeout(() => setShowFavorites(true), 0);
     },
     onRecord: () => {
-      addEntry("toggle recording", "command");
       setShowRealTimeRecording((prev) => !prev);
     },
     onGeneratePlaylist: (prompt) => {
-      addEntry(`create playlist: ${prompt}`, "command");
       generatePlaylist(prompt);
       setTimeout(() => setShowSpotify(true), 0);
     },
