@@ -26,6 +26,8 @@ import { useVoiceCommands } from "../hooks/useVoiceCommands";
 import { useAIPlaylist } from "../hooks/useAIPlaylist";
 import { useTheme } from "../context/ThemeContext";
 import SplashScreen from "../components/SplashScreen";
+import { useVoiceLog } from "../hooks/useVoiceLog";
+import VoiceCommandToast from "../components/VoiceCommandToast";
 
 /* ─── card config ─────────────────────────────────────────── */
 const CARDS = [
@@ -103,6 +105,7 @@ const Main = () => {
   const spotify = useSpotify();
   const [voiceActive, setVoiceActive] = useState(false);
   const voiceActiveRef = useRef(false);
+const { log, addEntry } = useVoiceLog();
 
   useEffect(() => {
     if (
@@ -203,22 +206,35 @@ const Main = () => {
   const { startListening, stopListening } = useVoiceCommands({
     onPlay: (query) => {
       if (!query) return;
+      addEntry(`play ${query}`, "command");
       setTimeout(() => setShowSpotify(true), 0);
       playByVoice(query);
     },
     onPause: () => {
+      addEntry("pause", "command");
       pauseTrack();
       setTimeout(() => setShowSpotify(false), 0);
     },
-    onNext: playNext,
-    onPrevious: playPrevious,
+    onNext: () => {
+      addEntry("next track", "command");
+      playNext();
+    },
+    onPrevious: () => {
+      addEntry("previous track", "command");
+      playPrevious();
+    },
     onFavorite: () => {
       if (!selectedTrack) return;
+      addEntry(`saved: ${selectedTrack.name}`, "result");
       toggleFavorite(selectedTrack);
       setTimeout(() => setShowFavorites(true), 0);
     },
-    onRecord: () => setShowRealTimeRecording((prev) => !prev),
+    onRecord: () => {
+      addEntry("toggle recording", "command");
+      setShowRealTimeRecording((prev) => !prev);
+    },
     onGeneratePlaylist: (prompt) => {
+      addEntry(`create playlist: ${prompt}`, "command");
       generatePlaylist(prompt);
       setTimeout(() => setShowSpotify(true), 0);
     },
@@ -365,7 +381,8 @@ const Main = () => {
           <div className="ambient-diagonal-tint" />
         </div>
       )}
-
+      {/* ── Voice Command Toast ── */} 
+      {voiceActive && <VoiceCommandToast entry={log[0] ?? null} />}
       {/* ── Header ── */}
       <div className="relative z-10">
         <Header
@@ -375,7 +392,6 @@ const Main = () => {
           onVoiceToggle={handleVoiceToggle}
         />
       </div>
-
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="space-y-6 sm:space-y-8">
           {/* ── Welcome hero ── */}
