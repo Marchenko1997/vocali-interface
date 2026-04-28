@@ -65,11 +65,12 @@ Voice control supports **English**, **Russian**, and **Ukrainian**. Toggle the m
 
 | Action | EN | RU | UK |
 |--------|----|----|-----|
-| Play track | `play / start / launch / open / put on / turn on <query>` | `играй / включи / поставь / запусти / воспроизведи <query>` | `грай / увімкни / постав / запусти / відтвори <query>` |
-| Pause | `pause / stop / halt / freeze` | `пауза / стоп / остановить / тишина` | `пауза / стоп / зупини` |
-| Next track | `next / skip / forward` | `следующий / дальше / далее / вперёд / пропусти` | `наступний / далі / вперед / пропусти` |
-| Previous | `previous / back / rewind / prev` | `предыдущий / назад / вернись` | `попередній / назад / поверни` |
-| Favorite | `favorite / like / save` | `в избранное / лайк / сохранить / запомни` | `до улюблених / лайк / зберегти` |
+| Play track | `play / start / launch / open / put on / turn on / search for / find / i want to hear / play me <query>` | `играй / включи / поставь / запусти / воспроизведи <query>` | `грай / увімкни / постав / запусти / відтвори <query>` |
+| Pause | `pause / stop / halt / freeze / mute / quiet / silence / be quiet` | `пауза / стоп / остановить / тишина` | `пауза / стоп / зупини` |
+| Next track | `next / skip / forward / next one / another one / change song / change track` | `следующий / дальше / далее / вперёд / пропусти` | `наступний / далі / вперед / пропусти` |
+| Previous | `previous / back / rewind / prev / last one / that one again` | `предыдущий / назад / вернись` | `попередній / назад / поверни` |
+| Favorite | `favorite / like / save / bookmark` | `в избранное / лайк / сохранить / запомни` | `до улюблених / лайк / зберегти` |
+| Unfavorite | `remove from favorites / remove from favourites / remove favorite / remove favourite / delete from favorites / delete from favourites / delete favorite / delete favourite / unfavorite / unlike / unheart / remove bookmark / unsave` | `удалить из избранного / убрать из избранного / удали из избранного / убери из избранного / не нравится / разлюбить` | `видалити з улюблених / прибрати з улюблених / видали з улюблених / не подобається` |
 | Record | `start recording / stop recording / record` | `начать запись / остановить запись / записать` | `почати запис / зупинити запис / записати` |
 | Create playlist | `create / make / generate / build playlist` | `создай / сделай / сгенерируй плейлист` | `зроби / створи / згенеруй плейлист` |
 
