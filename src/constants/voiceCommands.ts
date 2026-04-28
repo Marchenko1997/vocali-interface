@@ -145,6 +145,10 @@ export const VOICE_COMMANDS = {
     "remove favorite",
     "delete from favorites",
     "delete favorite",
+    "remove from favourites",
+    "remove favourite",
+    "delete from favourites",
+    "delete favourite",
     "unfavorite",
     "unlike",
     "unheart",
@@ -289,6 +293,7 @@ const NOISE_PATTERNS: RegExp[] = [
   /^obrigado\b.*/i,
   /^gracias\b.*/i,
   /^merci\b.*/i,
+  /^(hello|hi|hey|bye|okay|ok|yeah|yes|no|hmm+|uh+|oh|wow|nice|good|sorry|please|thanks|thank\s+you|welcome|excuse\s+me|olá|ola|hola|bonjour|ciao|привет|пока|ладно|да|нет|ну)$/i,
 ];
 
 export function cleanTranscript(text: string): string {
