@@ -214,6 +214,36 @@ export const VOICE_COMMANDS = {
     "згенеруй плейлист",
     "новий плейлист",
   ],
+  mood: [
+    // English
+    "chill mode",
+    "chill mood",
+    "chill",
+    "party mode",
+    "party mood",
+    "party",
+    "focus mode",
+    "focus mood",
+    "focus",
+    "dark mode",
+    "dark mood",
+    "dark",
+    // Russian
+    "режим чилл",
+    "настроение чилл",
+    "режим вечеринки",
+    "режим тусовки",
+    "режим фокуса",
+    "режим концентрации",
+    "тёмный режим",
+    "тёмное настроение",
+    // Ukrainian
+    "режим чіл",
+    "настрій чіл",
+    "режим вечірки",
+    "режим фокусу",
+    "темний режим",
+  ],
 };
 
 export function normalizeText(text: string): string {
@@ -223,8 +253,6 @@ export function normalizeText(text: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
-
-
 
 const playWords = [...VOICE_COMMANDS.play]
   .sort((a, b) => b.length - a.length)
@@ -238,16 +266,9 @@ function buildAlternation(words: string[]): string {
     .join("|");
 }
 
+export const PLAY_REGEX = new RegExp(`^(?:${playWords})[,.:;!?\\s]+(.+)$`, "i");
 
-export const PLAY_REGEX = new RegExp(
-  `^(?:${playWords})[,.:;!?\\s]+(.+)$`,
-  "i",
-);
-
-export const PLAY_TRIGGER_ONLY_REGEX = new RegExp(
-  `^(?:${playWords})$`,
-  "i",
-);
+export const PLAY_TRIGGER_ONLY_REGEX = new RegExp(`^(?:${playWords})$`, "i");
 
 export const NEXT_REGEX = new RegExp(
   `^(?:${buildAlternation(VOICE_COMMANDS.next)})$`,
@@ -279,10 +300,13 @@ export const RECORD_REGEX = new RegExp(
   "i",
 );
 
+export const MOOD_REGEX = new RegExp(
+  `^(?:${buildAlternation(VOICE_COMMANDS.mood)})$`,
+  "i",
+);
 
 export const PLAYLIST_REGEX = new RegExp(
   [
-
     "(?:create|make|generate|build|new)\\s+(?:\\w+\\s+)*playlist",
 
     "(?:создай|сделай|сгенерируй|новый)\\s+(?:\\w+\\s+)*плейлист",
@@ -340,3 +364,34 @@ export function cleanTranscript(text: string): string {
   }
   return text;
 }
+
+export const MOOD_ID_MAP: Record<string, string> = {
+  chill: "chill",
+  "chill mode": "chill",
+  "chill mood": "chill",
+  "режим чилл": "chill",
+  "настроение чилл": "chill",
+  "режим чіл": "chill",
+  "настрій чіл": "chill",
+
+  party: "party",
+  "party mode": "party",
+  "party mood": "party",
+  "режим вечеринки": "party",
+  "режим тусовки": "party",
+  "режим вечірки": "party",
+
+  focus: "focus",
+  "focus mode": "focus",
+  "focus mood": "focus",
+  "режим фокуса": "focus",
+  "режим концентрации": "focus",
+  "режим фокусу": "focus",
+
+  dark: "dark",
+  "dark mode": "dark",
+  "dark mood": "dark",
+  "тёмный режим": "dark",
+  "тёмное настроение": "dark",
+  "темний режим": "dark",
+};

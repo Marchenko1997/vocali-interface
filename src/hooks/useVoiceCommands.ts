@@ -12,6 +12,8 @@ import {
   VOICE_COMMANDS,
   normalizeText,
   cleanTranscript,
+  MOOD_REGEX,
+  MOOD_ID_MAP,
 } from "../constants/voiceCommands";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
@@ -89,6 +91,7 @@ interface VoiceCommandHandlers {
   onRecord: () => void;
   onGeneratePlaylist: (prompt: string) => void;
   onTranscript?: (text: string) => void;
+  onMoodChange?: (moodId: string) => void;
 }
 
 export function useVoiceCommands(handlers: VoiceCommandHandlers) {
@@ -201,6 +204,15 @@ export function useVoiceCommands(handlers: VoiceCommandHandlers) {
     if (UNFAVORITE_REGEX.test(t)) {
       log("unfavorite");
       handlersRef.current.onUnfavorite?.();
+      return;
+    }
+
+    if (MOOD_REGEX.test(t)) {
+      const moodId = MOOD_ID_MAP[t];
+      if (moodId) {
+        log("mood:", moodId);
+        handlersRef.current.onMoodChange?.(moodId);
+      }
       return;
     }
 

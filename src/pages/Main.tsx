@@ -28,6 +28,7 @@ import { useTheme } from "../context/ThemeContext";
 import SplashScreen from "../components/SplashScreen";
 import { useVoiceLog } from "../hooks/useVoiceLog";
 import VoiceCommandToast from "../components/VoiceCommandToast";
+import { useMood, type MoodId } from "../context/MoodContext";
 
 /* ─── card config ─────────────────────────────────────────── */
 const CARDS = [
@@ -202,12 +203,14 @@ const { log, addEntry } = useVoiceLog();
     removeFavorite,
     selectedTrack,
   } = spotify;
-  const { generatePlaylist, isGenerating, queue } = useAIPlaylist();
+  const { generatePlaylist, isGenerating, queue, clearQueue } = useAIPlaylist();
+ const { activeMood, moodSource, setMood } = useMood();
 
   const { startListening, stopListening } = useVoiceCommands({
     onTranscript: (text) => addEntry(text, "command"),
     onPlay: (query) => {
       if (!query) return;
+      clearQueue();
       setTimeout(() => setShowSpotify(true), 0);
       playByVoice(query);
     },
@@ -237,6 +240,10 @@ const { log, addEntry } = useVoiceLog();
     onGeneratePlaylist: (prompt) => {
       generatePlaylist(prompt);
       setTimeout(() => setShowSpotify(true), 0);
+    },
+    onMoodChange: (moodId) => {
+      setMood(moodId as MoodId, "voice");
+      addEntry(`mood: ${moodId}`, "result");
     },
   });
 
@@ -270,7 +277,13 @@ const { log, addEntry } = useVoiceLog();
         return {
           label: showSpotify ? "Stop Spotify Music" : "Start Spotify Music",
           active: showSpotify,
-          onClick: () => setShowSpotify(!showSpotify),
+          onClick: () => {
+            if (!showSpotify && activeMood) {
+             
+              generatePlaylist(`${activeMood} mood music playlist`);
+            }
+            setShowSpotify(!showSpotify);
+          },
         };
       case "favorites":
         return {
@@ -381,7 +394,7 @@ const { log, addEntry } = useVoiceLog();
           <div className="ambient-diagonal-tint" />
         </div>
       )}
-      {/* ── Voice Command Toast ── */} 
+      {/* ── Voice Command Toast ── */}
       {voiceActive && <VoiceCommandToast entry={log[0] ?? null} />}
       {/* ── Header ── */}
       <div className="relative z-10">
@@ -765,6 +778,9 @@ const { log, addEntry } = useVoiceLog();
               hasMore={spotify.hasMore}
               aiQueue={queue}
               isGenerating={isGenerating}
+              activeMood={activeMood}
+              moodSource={moodSource}
+              onClearQueue={clearQueue}
             />
           </div>
 

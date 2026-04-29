@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import api from "../services/api";
 
 interface AITrack {
@@ -26,10 +26,12 @@ interface AIPlaylistResult {
 export function useAIPlaylist() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [queue, setQueue] = useState<AITrack[]>([]);
+  const clearQueue = useCallback(() => setQueue([]), []);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [aiParams, setAiParams] = useState<
     AIPlaylistResult["ai_params"] | null
-  >(null);
+    >(null);
+ 
 
   const generatePlaylist = async (prompt: string) => {
     setIsGenerating(true);
@@ -67,5 +69,6 @@ export function useAIPlaylist() {
     nextTrack,
     prevTrack,
     aiParams,
+    clearQueue,
   };
 }

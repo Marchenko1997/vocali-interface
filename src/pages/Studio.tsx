@@ -7,6 +7,7 @@ import { MOODS, MODES } from "../constants/studioConfig";
 import { MoodPicker } from "../components/studio/MoodPicker";
 import { ModeSwitcher } from "../components/studio/ModeSwitcher";
 import SplashScreen from "../components/SplashScreen";
+import { useMood, type MoodId } from "../context/MoodContext";
 
 const Studio = () => {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ const Studio = () => {
   const { start, stop, getAnalyzerData } = useAudioAnalyzer();
   const { draw, mode, setMode, activeMood, handleMoodChange, currentBpmRef, resetBpm } =
     useVisualizer(getAnalyzerData, canvasRef, sensitivity);
+  const { setMood } = useMood();
 
   const handleToggle = async () => {
     if (isListening) {
@@ -72,6 +74,21 @@ const Studio = () => {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+
+useEffect(() => {
+  if (!isListening || displayBpm === 0) return;
+  const id: MoodId =
+    displayBpm < 80
+      ? "chill"
+      : displayBpm < 120
+        ? "focus"
+        : displayBpm < 140
+          ? "party"
+          : "dark";
+  setMood(id, "auto-bpm");
+}, [displayBpm, isListening]);
+
+
  if (showSplash) {
    return <SplashScreen title="Welcome to Vocali Studio" />;
  }
@@ -82,8 +99,6 @@ const Studio = () => {
       style={{ background: "#060611" }}
     >
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-
-    
         <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
@@ -95,62 +110,62 @@ const Studio = () => {
           }}
         />
 
- 
         <div
           className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full"
           style={{
-            background: "radial-gradient(circle, rgba(168,85,247,0.2) 0%, rgba(139,92,246,0.08) 50%, transparent 70%)",
+            background:
+              "radial-gradient(circle, rgba(168,85,247,0.2) 0%, rgba(139,92,246,0.08) 50%, transparent 70%)",
             filter: "blur(50px)",
             animation: "orb-drift 18s ease-in-out infinite",
           }}
         />
 
-        
         <div
           className="absolute -top-32 -right-32 w-[420px] h-[420px] rounded-full"
           style={{
-            background: "radial-gradient(circle, rgba(236,72,153,0.18) 0%, rgba(244,114,182,0.06) 50%, transparent 70%)",
+            background:
+              "radial-gradient(circle, rgba(236,72,153,0.18) 0%, rgba(244,114,182,0.06) 50%, transparent 70%)",
             filter: "blur(45px)",
             animation: "orb-drift-reverse 14s ease-in-out infinite",
           }}
         />
 
-    
         <div
           className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full"
           style={{
-            background: "radial-gradient(circle, rgba(56,189,248,0.1) 0%, transparent 70%)",
+            background:
+              "radial-gradient(circle, rgba(56,189,248,0.1) 0%, transparent 70%)",
             filter: "blur(40px)",
             animation: "orb-drift 22s ease-in-out infinite reverse",
           }}
         />
 
-        
         <div
           className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-[700px] h-56 rounded-full"
           style={{
-            background: "radial-gradient(ellipse, rgba(99,102,241,0.14) 0%, transparent 70%)",
+            background:
+              "radial-gradient(ellipse, rgba(99,102,241,0.14) 0%, transparent 70%)",
             filter: "blur(55px)",
           }}
         />
 
-       
         {isListening && (
           <div
             className="absolute top-1/2 left-1/2 w-[800px] h-[800px] rounded-full"
             style={{
-              background: "radial-gradient(circle, rgba(168,85,247,0.08) 0%, rgba(236,72,153,0.04) 40%, transparent 65%)",
+              background:
+                "radial-gradient(circle, rgba(168,85,247,0.08) 0%, rgba(236,72,153,0.04) 40%, transparent 65%)",
               filter: "blur(70px)",
               animation: "listening-pulse 4s ease-in-out infinite",
             }}
           />
         )}
 
-        
         <div
           className="absolute inset-0"
           style={{
-            background: "linear-gradient(135deg, rgba(168,85,247,0.04) 0%, transparent 40%, rgba(236,72,153,0.03) 100%)",
+            background:
+              "linear-gradient(135deg, rgba(168,85,247,0.04) 0%, transparent 40%, rgba(236,72,153,0.03) 100%)",
           }}
         />
       </div>
@@ -160,10 +175,12 @@ const Studio = () => {
         className="relative z-10 grid grid-cols-3 items-center px-6 py-3 lg:py-4"
         style={{
           borderBottom: "1px solid rgba(255,255,255,0.06)",
-          background: "linear-gradient(to bottom, rgba(168,85,247,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+          background:
+            "linear-gradient(to bottom, rgba(168,85,247,0.06) 0%, rgba(255,255,255,0.02) 100%)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
-          boxShadow: "0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(0,0,0,0.3)",
+          boxShadow:
+            "0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(0,0,0,0.3)",
         }}
       >
         <button
@@ -173,18 +190,22 @@ const Studio = () => {
             color: "rgba(255,255,255,0.38)",
             transition: "color 0.2s ease",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.85)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.38)")}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.color = "rgba(255,255,255,0.85)")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.color = "rgba(255,255,255,0.38)")
+          }
         >
           <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
           <span>Back to Vocali</span>
         </button>
 
-      
         <h1
           className="text-lg lg:text-xl font-bold tracking-widest uppercase text-center justify-self-center"
           style={{
-            background: "linear-gradient(90deg, #c084fc, #e879f9, #38bdf8, #c084fc)",
+            background:
+              "linear-gradient(90deg, #c084fc, #e879f9, #38bdf8, #c084fc)",
             backgroundSize: "200% auto",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
@@ -239,7 +260,7 @@ const Studio = () => {
         {(
           [
             { id: "microphone", label: "Microphone", icon: "🎙️" },
-            { id: "system",     label: "System Audio", icon: "🖥️" },
+            { id: "system", label: "System Audio", icon: "🖥️" },
           ] as { id: AudioSource; label: string; icon: string }[]
         ).map((src) => {
           const isActive = audioSource === src.id;
@@ -258,7 +279,8 @@ const Studio = () => {
                       color: "rgba(216,180,254,0.97)",
                       backdropFilter: "blur(10px)",
                       WebkitBackdropFilter: "blur(10px)",
-                      boxShadow: "0 0 20px rgba(168,85,247,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
+                      boxShadow:
+                        "0 0 20px rgba(168,85,247,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
                     }
                   : {
                       background: "rgba(255,255,255,0.03)",
@@ -271,7 +293,8 @@ const Studio = () => {
                 <span
                   className="absolute inset-0 pointer-events-none"
                   style={{
-                    background: "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 55%)",
+                    background:
+                      "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 55%)",
                   }}
                 />
               )}
@@ -284,7 +307,14 @@ const Studio = () => {
 
       {/* ── Mood + Mode + Sensitivity ── */}
       <div className="relative z-10">
-        <MoodPicker moods={MOODS} activeMood={activeMood} onChange={handleMoodChange} />
+        <MoodPicker
+          moods={MOODS}
+          activeMood={activeMood}
+          onChange={(mood) => {
+            handleMoodChange(mood);
+            setMood(mood.id as MoodId, "manual");
+          }}
+        />
         <ModeSwitcher modes={MODES} activeMode={mode} onChange={setMode} />
 
         {/* Sensitivity */}
@@ -324,7 +354,9 @@ const Studio = () => {
           background: "rgba(10,10,25,0.6)",
           backdropFilter: "blur(6px)",
           WebkitBackdropFilter: "blur(6px)",
-          animation: isListening ? "border-glow 4s ease-in-out infinite" : "none",
+          animation: isListening
+            ? "border-glow 4s ease-in-out infinite"
+            : "none",
           boxShadow: isListening
             ? "0 0 50px rgba(168,85,247,0.15), inset 0 0 60px rgba(0,0,0,0.4)"
             : "0 8px 40px rgba(0,0,0,0.4), inset 0 0 40px rgba(0,0,0,0.3)",
@@ -342,33 +374,40 @@ const Studio = () => {
           }}
         />
 
-     
         <div
           className="absolute top-0 left-0 w-24 h-24 pointer-events-none"
           style={{
-            background: "radial-gradient(circle at top left, rgba(168,85,247,0.22) 0%, transparent 70%)",
+            background:
+              "radial-gradient(circle at top left, rgba(168,85,247,0.22) 0%, transparent 70%)",
           }}
         />
         <div
           className="absolute top-0 right-0 w-20 h-20 pointer-events-none"
           style={{
-            background: "radial-gradient(circle at top right, rgba(56,189,248,0.12) 0%, transparent 70%)",
+            background:
+              "radial-gradient(circle at top right, rgba(56,189,248,0.12) 0%, transparent 70%)",
           }}
         />
         <div
           className="absolute bottom-0 right-0 w-24 h-24 pointer-events-none"
           style={{
-            background: "radial-gradient(circle at bottom right, rgba(236,72,153,0.18) 0%, transparent 70%)",
+            background:
+              "radial-gradient(circle at bottom right, rgba(236,72,153,0.18) 0%, transparent 70%)",
           }}
         />
         <div
           className="absolute bottom-0 left-0 w-20 h-20 pointer-events-none"
           style={{
-            background: "radial-gradient(circle at bottom left, rgba(99,102,241,0.12) 0%, transparent 70%)",
+            background:
+              "radial-gradient(circle at bottom left, rgba(99,102,241,0.12) 0%, transparent 70%)",
           }}
         />
 
-        <canvas ref={canvasRef} className="w-full h-full" style={{ minHeight: "400px" }} />
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full"
+          style={{ minHeight: "400px" }}
+        />
 
         {!isListening && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 pointer-events-none">
@@ -378,7 +417,8 @@ const Studio = () => {
                 background: "rgba(6,6,17,0.7)",
                 border: "1px solid rgba(255,255,255,0.06)",
                 backdropFilter: "blur(16px)",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)",
+                boxShadow:
+                  "0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)",
               }}
             >
               <p
@@ -387,7 +427,10 @@ const Studio = () => {
               >
                 Play music and press the button
               </p>
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.18)" }}>
+              <p
+                className="text-sm"
+                style={{ color: "rgba(255,255,255,0.18)" }}
+              >
                 {audioSource === "microphone"
                   ? "Microphone listens to your speakers"
                   : "Select a browser tab with music playing"}
@@ -456,12 +499,16 @@ const Studio = () => {
           {isListening ? (
             <>
               <MicOff className="w-5 h-5 relative z-10" />
-              <span className="relative z-10 tracking-wide">Stop Visualizer</span>
+              <span className="relative z-10 tracking-wide">
+                Stop Visualizer
+              </span>
             </>
           ) : (
             <>
               <Mic className="w-5 h-5 relative z-10" />
-              <span className="relative z-10 tracking-wide">Start Visualizer</span>
+              <span className="relative z-10 tracking-wide">
+                Start Visualizer
+              </span>
             </>
           )}
         </button>

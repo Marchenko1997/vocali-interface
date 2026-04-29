@@ -2,6 +2,7 @@ import { Loader2, Music, Search } from "lucide-react";
 import TrackItem from "./TrackItem";
 import { useRef, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
+import type { MoodId, MoodSource } from "../context/MoodContext";
 
 interface SpotifyPanelProps {
   spotifyQuery: string;
@@ -21,6 +22,9 @@ interface SpotifyPanelProps {
   hasMore: boolean;
   aiQueue?: any[];
   isGenerating?: boolean;
+  activeMood?: MoodId | null;
+  moodSource?: MoodSource | null;
+  onClearQueue?: () => void;
 }
 
 const SpotifyPanel = ({
@@ -40,6 +44,9 @@ const SpotifyPanel = ({
   loadMore,
   hasMore,
   aiQueue = [],
+  activeMood,
+  moodSource,
+  onClearQueue,
 }: SpotifyPanelProps) => {
   const listRef = useRef<HTMLDivElement | null>(null);
   const [inputFocused, setInputFocused] = useState(false);
@@ -65,7 +72,8 @@ const SpotifyPanel = ({
                 border: "1px solid rgba(52,211,153,0.18)",
                 backdropFilter: "blur(12px)",
                 WebkitBackdropFilter: "blur(12px)",
-                boxShadow: "0 4px 32px rgba(0,0,0,0.3), 0 0 40px rgba(52,211,153,0.05), inset 0 1px 0 rgba(255,255,255,0.04)",
+                boxShadow:
+                  "0 4px 32px rgba(0,0,0,0.3), 0 0 40px rgba(52,211,153,0.05), inset 0 1px 0 rgba(255,255,255,0.04)",
               }
             : {
                 backgroundColor: "var(--bg-card)",
@@ -79,9 +87,40 @@ const SpotifyPanel = ({
           <div
             className="absolute top-0 left-6 right-6 h-px pointer-events-none"
             style={{
-              background: "linear-gradient(90deg, transparent, rgba(52,211,153,0.5), rgba(16,185,129,0.4), transparent)",
+              background:
+                "linear-gradient(90deg, transparent, rgba(52,211,153,0.5), rgba(16,185,129,0.4), transparent)",
             }}
           />
+        )}
+        {/* Mood badge */}
+        {activeMood && (
+          <div className="flex items-center gap-2 mb-3">
+            <div
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium w-fit"
+              style={
+                isDark
+                  ? {
+                      background: "rgba(52,211,153,0.08)",
+                      border: "1px solid rgba(52,211,153,0.25)",
+                      color: "rgba(110,231,183,0.85)",
+                    }
+                  : {
+                      background: "rgba(16,185,129,0.08)",
+                      border: "1px solid rgba(16,185,129,0.2)",
+                      color: "rgb(6,95,70)",
+                    }
+              }
+            >
+              <span>🎵</span>
+              <span className="capitalize">{activeMood} mood</span>
+              {moodSource === "auto-bpm" && (
+                <span style={{ opacity: 0.6 }}>· auto</span>
+              )}
+              {moodSource === "voice" && (
+                <span style={{ opacity: 0.6 }}>· voice</span>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Corner glow */}
@@ -89,7 +128,8 @@ const SpotifyPanel = ({
           <div
             className="absolute top-0 right-0 w-32 h-32 pointer-events-none"
             style={{
-              background: "radial-gradient(circle at top right, rgba(52,211,153,0.08) 0%, transparent 70%)",
+              background:
+                "radial-gradient(circle at top right, rgba(52,211,153,0.08) 0%, transparent 70%)",
             }}
           />
         )}
@@ -100,7 +140,12 @@ const SpotifyPanel = ({
             <input
               value={spotifyQuery}
               onChange={(e) => onQueryChange(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") onSearch(); }}
+              onKeyDown={(e) => {
+               if (e.key === "Enter") {
+                 onClearQueue?.();
+                 onSearch();
+               }
+              }}
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
               placeholder="Search music..."
@@ -136,7 +181,9 @@ const SpotifyPanel = ({
               className="absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-200"
               style={{
                 color: inputFocused
-                  ? isDark ? "rgba(52,211,153,0.8)" : "rgb(16,185,129)"
+                  ? isDark
+                    ? "rgba(52,211,153,0.8)"
+                    : "rgb(16,185,129)"
                   : "var(--text-faint)",
               }}
             >
@@ -146,12 +193,16 @@ const SpotifyPanel = ({
 
           {/* Search button */}
           <button
-            onClick={onSearch}
-            className="w-full font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 relative overflow-hidden group"
+            onClick={() => {
+              onClearQueue?.();
+              onSearch();
+            }}
+            className="w-full font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 relative overflow-hidden group focus:outline-none"
             style={
               isDark
                 ? {
-                    background: "linear-gradient(135deg, rgba(52,211,153,0.2), rgba(16,185,129,0.15))",
+                    background:
+                      "linear-gradient(135deg, rgba(52,211,153,0.2), rgba(16,185,129,0.15))",
                     border: "1px solid rgba(52,211,153,0.35)",
                     color: "rgba(110,231,183,0.95)",
                     boxShadow: "0 0 20px rgba(52,211,153,0.12)",
@@ -165,21 +216,27 @@ const SpotifyPanel = ({
             }
             onMouseEnter={(e) => {
               if (isDark) {
-                e.currentTarget.style.background = "linear-gradient(135deg, rgba(52,211,153,0.28), rgba(16,185,129,0.22))";
-                e.currentTarget.style.boxShadow = "0 0 28px rgba(52,211,153,0.2)";
+                e.currentTarget.style.background =
+                  "linear-gradient(135deg, rgba(52,211,153,0.28), rgba(16,185,129,0.22))";
+                e.currentTarget.style.boxShadow =
+                  "0 0 28px rgba(52,211,153,0.2)";
                 e.currentTarget.style.borderColor = "rgba(52,211,153,0.5)";
               } else {
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(16,185,129,0.4)";
+                e.currentTarget.style.boxShadow =
+                  "0 6px 20px rgba(16,185,129,0.4)";
                 e.currentTarget.style.transform = "scale(1.01)";
               }
             }}
             onMouseLeave={(e) => {
               if (isDark) {
-                e.currentTarget.style.background = "linear-gradient(135deg, rgba(52,211,153,0.2), rgba(16,185,129,0.15))";
-                e.currentTarget.style.boxShadow = "0 0 20px rgba(52,211,153,0.12)";
+                e.currentTarget.style.background =
+                  "linear-gradient(135deg, rgba(52,211,153,0.2), rgba(16,185,129,0.15))";
+                e.currentTarget.style.boxShadow =
+                  "0 0 20px rgba(52,211,153,0.12)";
                 e.currentTarget.style.borderColor = "rgba(52,211,153,0.35)";
               } else {
-                e.currentTarget.style.boxShadow = "0 4px 14px rgba(16,185,129,0.3)";
+                e.currentTarget.style.boxShadow =
+                  "0 4px 14px rgba(16,185,129,0.3)";
                 e.currentTarget.style.transform = "scale(1)";
               }
             }}
@@ -189,7 +246,8 @@ const SpotifyPanel = ({
               <div
                 className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 style={{
-                  background: "linear-gradient(90deg, transparent 0%, rgba(52,211,153,0.08) 50%, transparent 100%)",
+                  background:
+                    "linear-gradient(90deg, transparent 0%, rgba(52,211,153,0.08) 50%, transparent 100%)",
                 }}
               />
             )}
@@ -206,7 +264,9 @@ const SpotifyPanel = ({
                 <div
                   className="w-1.5 h-1.5 rounded-full animate-pulse"
                   style={{
-                    backgroundColor: isDark ? "rgba(52,211,153,0.8)" : "rgb(16,185,129)",
+                    backgroundColor: isDark
+                      ? "rgba(52,211,153,0.8)"
+                      : "rgb(16,185,129)",
                     boxShadow: isDark ? "0 0 6px rgba(52,211,153,0.6)" : "none",
                   }}
                 />
@@ -222,49 +282,79 @@ const SpotifyPanel = ({
             </div>
             <div
               className="space-y-2 max-h-64 overflow-y-auto pr-1.5"
-              style={isDark ? { scrollbarWidth: "thin", scrollbarColor: "rgba(52,211,153,0.3) transparent" } : {}}
+              style={
+                isDark
+                  ? {
+                      scrollbarWidth: "thin",
+                      scrollbarColor: "rgba(52,211,153,0.3) transparent",
+                    }
+                  : {}
+              }
             >
               {aiQueue.map((track, index) => (
                 <TrackItem
                   key={`${track.id}-${index}`}
-                  track={{ ...track, artists: track.artists ?? [{ name: track.artist ?? "Unknown" }] }}
+                  track={{
+                    ...track,
+                    artists: track.artists ?? [
+                      { name: track.artist ?? "Unknown" },
+                    ],
+                  }}
                   isActive={selectedTrack?.id === track.id}
                   activeColor="green"
                   onSelect={() => onSelectTrack(track)}
                   isFavorite={isFavorite(track.id)}
-                  onToggleFavorite={(e) => { e.stopPropagation(); onToggleFavorite(track); }}
+                  onToggleFavorite={(e) => {
+                    e.stopPropagation();
+                    onToggleFavorite(track);
+                  }}
                 />
               ))}
             </div>
           </div>
-
         ) : loadingSpotify ? (
           <div className="flex justify-center py-6">
             <div
               className="flex items-center gap-2 text-sm"
-              style={{ color: isDark ? "rgba(110,231,183,0.6)" : "var(--text-muted)" }}
+              style={{
+                color: isDark ? "rgba(110,231,183,0.6)" : "var(--text-muted)",
+              }}
             >
               <Loader2 className="animate-spin w-4 h-4" />
               <span>Searching...</span>
             </div>
           </div>
-
         ) : spotifyResults.length > 0 ? (
           <div
             ref={listRef}
             onScroll={handleScroll}
             className="space-y-2 max-h-64 overflow-y-auto pr-1.5 mt-4"
-            style={isDark ? { scrollbarWidth: "thin", scrollbarColor: "rgba(52,211,153,0.3) transparent" } : {}}
+            style={
+              isDark
+                ? {
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "rgba(52,211,153,0.3) transparent",
+                  }
+                : {}
+            }
           >
             {spotifyResults.map((track) => (
               <TrackItem
                 key={track.id}
-                track={{ ...track, artists: track.artists ?? [{ name: track.artist ?? "Unknown" }] }}
+                track={{
+                  ...track,
+                  artists: track.artists ?? [
+                    { name: track.artist ?? "Unknown" },
+                  ],
+                }}
                 isActive={selectedTrack?.id === track.id}
                 activeColor="green"
                 onSelect={() => onSelectTrack(track)}
                 isFavorite={isFavorite(track.id)}
-                onToggleFavorite={(e) => { e.stopPropagation(); onToggleFavorite(track); }}
+                onToggleFavorite={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite(track);
+                }}
               />
             ))}
             {!hasMore && spotifyResults.length > 0 && (
@@ -276,18 +366,30 @@ const SpotifyPanel = ({
               </p>
             )}
           </div>
-
         ) : hasSearched && spotifyResults.length === 0 ? (
           <div className="text-center py-8">
             <div
               className="inline-flex items-center justify-center w-12 h-12 rounded-xl mx-auto mb-3"
               style={
                 isDark
-                  ? { background: "rgba(52,211,153,0.07)", border: "1px solid rgba(52,211,153,0.18)" }
-                  : { background: "rgba(52,211,153,0.06)", border: "1px solid rgba(52,211,153,0.15)" }
+                  ? {
+                      background: "rgba(52,211,153,0.07)",
+                      border: "1px solid rgba(52,211,153,0.18)",
+                    }
+                  : {
+                      background: "rgba(52,211,153,0.06)",
+                      border: "1px solid rgba(52,211,153,0.15)",
+                    }
               }
             >
-              <Music className="w-5 h-5" style={{ color: isDark ? "rgba(110,231,183,0.4)" : "rgba(16,185,129,0.4)" }} />
+              <Music
+                className="w-5 h-5"
+                style={{
+                  color: isDark
+                    ? "rgba(110,231,183,0.4)"
+                    : "rgba(16,185,129,0.4)",
+                }}
+              />
             </div>
             <p className="text-sm" style={{ color: "var(--text-faint)" }}>
               No tracks found
@@ -316,13 +418,19 @@ const SpotifyPanel = ({
               <div
                 className="absolute inset-0 flex items-center justify-center rounded-xl z-10"
                 style={{
-                  backgroundColor: isDark ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.1)",
+                  backgroundColor: isDark
+                    ? "rgba(0,0,0,0.4)"
+                    : "rgba(0,0,0,0.1)",
                   backdropFilter: "blur(4px)",
                 }}
               >
                 <Loader2
                   className="animate-spin w-5 h-5"
-                  style={{ color: isDark ? "rgba(110,231,183,0.7)" : "var(--text-muted)" }}
+                  style={{
+                    color: isDark
+                      ? "rgba(110,231,183,0.7)"
+                      : "var(--text-muted)",
+                  }}
                 />
               </div>
             )}
