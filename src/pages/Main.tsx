@@ -199,6 +199,7 @@ const { log, addEntry } = useVoiceLog();
     playNext,
     playPrevious,
     toggleFavorite,
+    removeFavorite,
     selectedTrack,
   } = spotify;
   const { generatePlaylist, isGenerating, queue } = useAIPlaylist();
@@ -225,6 +226,10 @@ const { log, addEntry } = useVoiceLog();
       addEntry(`saved: ${selectedTrack.name}`, "result");
       toggleFavorite(selectedTrack);
       setTimeout(() => setShowFavorites(true), 0);
+    },
+    onUnfavorite: () => {
+      if (!selectedTrack) return;
+      removeFavorite(selectedTrack.id);
     },
     onRecord: () => {
       setShowRealTimeRecording((prev) => !prev);

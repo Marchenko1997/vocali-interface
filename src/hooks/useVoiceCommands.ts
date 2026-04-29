@@ -227,7 +227,7 @@ export function useVoiceCommands(handlers: VoiceCommandHandlers) {
 
   const sendChunkToWhisper = useCallback(async (blob: Blob) => {
     if (!isListeningRef.current) return;
-    if (blob.size < 10000) return;
+    if (blob.size < 15000) return;
 
     try {
       const formData = new FormData();

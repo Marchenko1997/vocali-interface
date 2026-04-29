@@ -83,6 +83,8 @@ export const VOICE_COMMANDS = {
     "далі",
     "вперед",
     "пропусти",
+    "наступно",
+    "давай далі",
   ],
 
   previous: [
@@ -145,10 +147,12 @@ export const VOICE_COMMANDS = {
     "remove favorite",
     "delete from favorites",
     "delete favorite",
+    "delete favorites",
     "remove from favourites",
     "remove favourite",
     "delete from favourites",
     "delete favourite",
+    "delete favourites",
     "unfavorite",
     "unlike",
     "unheart",
@@ -166,6 +170,9 @@ export const VOICE_COMMANDS = {
     "прибрати з улюблених",
     "видали з улюблених",
     "не подобається",
+    "видали",
+    "прибери",
+    "прибрати",
   ],
 
   record: [
@@ -285,20 +292,51 @@ export const PLAYLIST_REGEX = new RegExp(
   "i",
 );
 
+// Note: Whisper may split long phrases across multiple chunks.
+// Multi-word commands may fail if the phrase crosses a chunk boundary.
 const NOISE_PATTERNS: RegExp[] = [
   /^thanks?(\s+you)?\s+for\s+(watching|listening)\b.*/i,
   /^teksting\s+av\s+\S+.*/i,
   /^subtitles?\s+by\s+\S+.*/i,
   /^takk\s+for\s+at\s+du\s+så\s+med\b.*/i,
-  /^obrigado\b.*/i,
+  /^obrigad[ao]\b.*/i,
   /^gracias\b.*/i,
   /^merci\b.*/i,
+  /^danke(\s+\w+)*$/i,
+  /^(tack|tack\s+så\s+mycket)\b.*/i,
+  /^(engelsk|norsk|dansk)\b.*/i,
+  /^(enlightenment|entertainment)\b.*/i,
+  /^ol[aá]\b$/i,
+  /^(hello|hi|hey)\s+\w+/i,
+  /^(what's up|what up|how are you|how's it going|good morning|good evening|good night|see you|see ya|take care|have a good one|stay safe|don't forget to|subscribe|like and subscribe|hit the bell|smash the like)\b.*/i,
   /^(hello|hi|hey|bye|okay|ok|yeah|yes|no|hmm+|uh+|oh|wow|nice|good|sorry|please|thanks|thank\s+you|welcome|excuse\s+me|olá|ola|hola|bonjour|ciao|привет|пока|ладно|да|нет|ну)$/i,
+  /^(спасибо|пожалуйста|извини|извините|окей|ладно|понял|понятно|дякую|будь ласка)$/i,
+  /^(the\s+)?\.{1,3}$/i,
+  /^\[.*\]$/i,
+  /^\(.*\)$/i,
+  /^[^a-zA-Zа-яА-ЯіїєґёЁÀ-ÿ]{1,5}$/,
 ];
 
+const HALLUCINATION_WORDS = new Set([
+  "agglomeration",
+  "amalgamation",
+  "conglomeration",
+  "enlightenment",
+  "telecommunications",
+  "superintendent",
+  "parliamentarian",
+]);
+
 export function cleanTranscript(text: string): string {
+  const whitespaceTrimmed = text.trim();
+  const trimmed = whitespaceTrimmed.replace(/^[^\wЀ-ӿÀ-ÿ]+|[^\wЀ-ӿÀ-ÿ]+$/g, "");
+  if (!trimmed) return "";
   for (const pattern of NOISE_PATTERNS) {
-    if (pattern.test(text)) return "";
+    if (pattern.test(trimmed) || pattern.test(whitespaceTrimmed)) return "";
+  }
+  const words = trimmed.split(/\s+/);
+  if (words.length === 1 && HALLUCINATION_WORDS.has(trimmed.toLowerCase())) {
+    return "";
   }
   return text;
 }
