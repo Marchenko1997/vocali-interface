@@ -20,6 +20,8 @@ const Studio = () => {
   const [showSplash, setShowSplash] = useState(() => location.state?.showSplash === true);
   const [displayBpm, setDisplayBpm] = useState<number>(0);
   const bpmUpdateTimerRef = useRef<number>(0);
+  const manualMoodTimerRef = useRef<number>(0);
+  const isManualMoodActive = useRef(false);
 
   const { start, stop, getAnalyzerData } = useAudioAnalyzer();
   const { draw, mode, setMode, activeMood, handleMoodChange, currentBpmRef, resetBpm } =
@@ -71,12 +73,14 @@ const Studio = () => {
       stop();
       cancelAnimationFrame(frameRef.current);
       clearInterval(bpmUpdateTimerRef.current);
+      clearTimeout(manualMoodTimerRef.current);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
 
 useEffect(() => {
   if (!isListening || displayBpm === 0) return;
+  if (isManualMoodActive.current) return;
   const id: MoodId =
     displayBpm < 80
       ? "chill"
@@ -313,6 +317,11 @@ useEffect(() => {
           onChange={(mood) => {
             handleMoodChange(mood);
             setMood(mood.id as MoodId, "manual");
+            isManualMoodActive.current = true;
+            clearTimeout(manualMoodTimerRef.current);
+            manualMoodTimerRef.current = window.setTimeout(() => {
+              isManualMoodActive.current = false;
+            }, 30_000);
           }}
         />
         <ModeSwitcher modes={MODES} activeMode={mode} onChange={setMode} />

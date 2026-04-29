@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, test } from "vitest";
 import fc from "fast-check";
 import {
   PLAY_REGEX,
