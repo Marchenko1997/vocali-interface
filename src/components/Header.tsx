@@ -206,7 +206,9 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
 
             {/*  Insights button */}
             <button
-              onClick={() => navigate("/insights")}
+              onClick={() =>
+                navigate("/insights", { state: { showSplash: true } })
+              }
               className="flex items-center space-x-2 px-3 py-2 rounded-lg border font-medium text-sm transition-all duration-200 focus:outline-none"
               style={
                 isDark
@@ -477,7 +479,7 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
             {/*   Insights mobile */}
             <button
               onClick={() => {
-                navigate("/insights");
+                navigate("/insights", { state: { showSplash: true } });
                 setMobileMenuOpen(false);
               }}
               className="w-full flex items-center space-x-2 px-3 py-2.5 rounded-lg border font-medium text-sm"

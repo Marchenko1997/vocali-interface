@@ -3,6 +3,7 @@ import logoAnimated from "../assets/logo-vocali-animated.mp4";
 interface SplashScreenProps {
   userName?: string;
   title?: string;
+  onFinish?: () => void;
 }
 
 const PARTICLES = [

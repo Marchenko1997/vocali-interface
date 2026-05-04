@@ -934,3 +934,96 @@ input:-webkit-autofill:focus {
 [data-theme="dark"] .overflow-y-auto {
   scrollbar-color: rgba(192, 132, 252, 0.6) rgba(168, 85, 247, 0.04);
 }
+
+
+/* ── INSIGHTS PAGE ────────────────────────────────────────── */
+.insights-card {
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid;
+}
+[data-theme="light"] .insights-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+[data-theme="dark"] .insights-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.insights-heading {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+}
+[data-theme="light"] .insights-heading {
+  color: #1a1a2e;
+}
+[data-theme="dark"] .insights-heading {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.insights-stat-card {
+  border-radius: 0.75rem;
+  padding: 1rem;
+  border: 1px solid;
+}
+[data-theme="light"] .insights-stat-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+[data-theme="dark"] .insights-stat-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.insights-track-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid;
+  transition: all 200ms;
+}
+[data-theme="light"] .insights-track-row {
+  background: #f9fafb;
+  border-color: rgba(0, 0, 0, 0.05);
+}
+[data-theme="dark"] .insights-track-row {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+[data-theme="light"] .insights-track-row:hover {
+  background: #f3e8ff;
+  border-color: rgba(168, 85, 247, 0.2);
+}
+[data-theme="dark"] .insights-track-row:hover {
+  background: rgba(168, 85, 247, 0.07);
+  border-color: rgba(168, 85, 247, 0.2);
+}
+
+.insights-scroll-list {
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  max-height: 320px;
+}
+.insights-scroll-list > * + * {
+  margin-top: 0.375rem;
+}
+
+.insights-scroll-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2.5rem;
+  pointer-events: none;
+  border-radius: 0 0 12px 12px;
+}
+[data-theme="light"] .insights-scroll-fade {
+  background: linear-gradient(to bottom, transparent, #ffffff);
+}
+[data-theme="dark"] .insights-scroll-fade {
+  background: linear-gradient(to bottom, transparent, rgba(6, 6, 17, 0.9));
+}
