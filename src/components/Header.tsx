@@ -6,6 +6,7 @@ import Logo from "./Logo";
 import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
+import { BarChart2 } from "lucide-react";
 
 interface HeaderProps {
   user: { name: string; email: string } | null;
@@ -30,14 +31,16 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
               borderColor: "rgba(168,85,247,0.15)",
               backdropFilter: "blur(16px)",
               WebkitBackdropFilter: "blur(16px)",
-              boxShadow: "0 1px 0 rgba(168,85,247,0.1), 0 4px 24px rgba(0,0,0,0.3)",
+              boxShadow:
+                "0 1px 0 rgba(168,85,247,0.1), 0 4px 24px rgba(0,0,0,0.3)",
             }
           : {
               backgroundColor: "rgba(255,255,255,0.85)",
               borderColor: "rgba(147,51,234,0.1)",
               backdropFilter: "blur(12px)",
               WebkitBackdropFilter: "blur(12px)",
-              boxShadow: "0 1px 0 rgba(147,51,234,0.06), 0 2px 12px rgba(0,0,0,0.04)",
+              boxShadow:
+                "0 1px 0 rgba(147,51,234,0.06), 0 2px 12px rgba(0,0,0,0.04)",
             }
       }
     >
@@ -46,14 +49,14 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
         <div
           className="absolute top-0 left-0 right-0 h-px pointer-events-none"
           style={{
-            background: "linear-gradient(90deg, transparent 0%, rgba(168,85,247,0.4) 30%, rgba(236,72,153,0.4) 60%, transparent 100%)",
+            background:
+              "linear-gradient(90deg, transparent 0%, rgba(168,85,247,0.4) 30%, rgba(236,72,153,0.4) 60%, transparent 100%)",
           }}
         />
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-
           {/* Logo + Title */}
           <div className="flex items-center space-x-2 sm:space-x-3">
             <Logo size="md" />
@@ -93,36 +96,45 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
                   }
             }
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </button>
 
           {/* Desktop nav */}
           <div className="hidden lg:flex items-center space-x-3">
-
             {/* Voice toggle */}
             <button
               onClick={onVoiceToggle}
-              title={voiceActive ? "Disable voice commands" : "Enable voice commands"}
+              title={
+                voiceActive ? "Disable voice commands" : "Enable voice commands"
+              }
               className="flex items-center space-x-2 px-3 py-2 rounded-lg border font-medium text-sm transition-all duration-200 focus:outline-none"
               style={
                 voiceActive
                   ? {
                       backgroundColor: "rgba(74,222,128,0.1)",
                       borderColor: "rgba(74,222,128,0.35)",
-                      color: isDark ? "rgba(134,239,172,0.95)" : "rgb(21,128,61)",
-                      boxShadow: isDark ? "0 0 12px rgba(74,222,128,0.12)" : "none",
+                      color: isDark
+                        ? "rgba(134,239,172,0.95)"
+                        : "rgb(21,128,61)",
+                      boxShadow: isDark
+                        ? "0 0 12px rgba(74,222,128,0.12)"
+                        : "none",
                     }
                   : isDark
-                  ? {
-                      backgroundColor: "rgba(168,85,247,0.06)",
-                      borderColor: "rgba(168,85,247,0.2)",
-                      color: "rgba(200,180,255,0.7)",
-                    }
-                  : {
-                      backgroundColor: "var(--bg-card)",
-                      borderColor: "var(--border-color)",
-                      color: "var(--text-muted)",
-                    }
+                    ? {
+                        backgroundColor: "rgba(168,85,247,0.06)",
+                        borderColor: "rgba(168,85,247,0.2)",
+                        color: "rgba(200,180,255,0.7)",
+                      }
+                    : {
+                        backgroundColor: "var(--bg-card)",
+                        borderColor: "var(--border-color)",
+                        color: "var(--text-muted)",
+                      }
               }
             >
               {voiceActive ? (
@@ -136,7 +148,9 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
                   <div
                     className="w-2 h-2 rounded-full"
                     style={{
-                      backgroundColor: isDark ? "rgba(168,85,247,0.4)" : "var(--border-color)",
+                      backgroundColor: isDark
+                        ? "rgba(168,85,247,0.4)"
+                        : "var(--border-color)",
                     }}
                   />
                   <MicOff className="h-4 w-4" />
@@ -147,7 +161,9 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
 
             {/* Studio button */}
             <button
-              onClick={() => navigate("/studio", { state: { showSplash: true } })}
+              onClick={() =>
+                navigate("/studio", { state: { showSplash: true } })
+              }
               className="flex items-center space-x-2 px-3 py-2 rounded-lg border font-medium text-sm transition-all duration-200 focus:outline-none"
               style={
                 isDark
@@ -165,16 +181,20 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
               }
               onMouseEnter={(e) => {
                 if (isDark) {
-                  e.currentTarget.style.backgroundColor = "rgba(99,102,241,0.18)";
-                  e.currentTarget.style.boxShadow = "0 0 20px rgba(99,102,241,0.2)";
+                  e.currentTarget.style.backgroundColor =
+                    "rgba(99,102,241,0.18)";
+                  e.currentTarget.style.boxShadow =
+                    "0 0 20px rgba(99,102,241,0.2)";
                 } else {
                   e.currentTarget.style.backgroundColor = "#e0e7ff";
                 }
               }}
               onMouseLeave={(e) => {
                 if (isDark) {
-                  e.currentTarget.style.backgroundColor = "rgba(99,102,241,0.1)";
-                  e.currentTarget.style.boxShadow = "0 0 14px rgba(99,102,241,0.12)";
+                  e.currentTarget.style.backgroundColor =
+                    "rgba(99,102,241,0.1)";
+                  e.currentTarget.style.boxShadow =
+                    "0 0 14px rgba(99,102,241,0.12)";
                 } else {
                   e.currentTarget.style.backgroundColor = "#eef2ff";
                 }
@@ -184,10 +204,55 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
               <span>Studio</span>
             </button>
 
+            {/*  Insights button */}
+            <button
+              onClick={() => navigate("/insights")}
+              className="flex items-center space-x-2 px-3 py-2 rounded-lg border font-medium text-sm transition-all duration-200 focus:outline-none"
+              style={
+                isDark
+                  ? {
+                      backgroundColor: "rgba(168,85,247,0.08)",
+                      borderColor: "rgba(168,85,247,0.25)",
+                      color: "rgba(192,132,252,0.9)",
+                    }
+                  : {
+                      backgroundColor: "#faf5ff",
+                      borderColor: "#e9d5ff",
+                      color: "#7c3aed",
+                    }
+              }
+              onMouseEnter={(e) => {
+                if (isDark) {
+                  e.currentTarget.style.backgroundColor =
+                    "rgba(168,85,247,0.15)";
+                  e.currentTarget.style.boxShadow =
+                    "0 0 16px rgba(168,85,247,0.2)";
+                } else {
+                  e.currentTarget.style.backgroundColor = "#ede9fe";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (isDark) {
+                  e.currentTarget.style.backgroundColor =
+                    "rgba(168,85,247,0.08)";
+                  e.currentTarget.style.boxShadow = "none";
+                } else {
+                  e.currentTarget.style.backgroundColor = "#faf5ff";
+                }
+              }}
+            >
+              <BarChart2 className="h-4 w-4" />
+              <span>Insights</span>
+            </button>
+
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+              title={
+                theme === "light"
+                  ? "Switch to dark mode"
+                  : "Switch to light mode"
+              }
               className="flex items-center justify-center w-9 h-9 rounded-lg border transition-all duration-200 focus:outline-none"
               style={
                 isDark
@@ -204,25 +269,34 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
               }
               onMouseEnter={(e) => {
                 if (isDark) {
-                  e.currentTarget.style.backgroundColor = "rgba(168,85,247,0.15)";
-                  e.currentTarget.style.boxShadow = "0 0 12px rgba(168,85,247,0.2)";
+                  e.currentTarget.style.backgroundColor =
+                    "rgba(168,85,247,0.15)";
+                  e.currentTarget.style.boxShadow =
+                    "0 0 12px rgba(168,85,247,0.2)";
                 }
               }}
               onMouseLeave={(e) => {
                 if (isDark) {
-                  e.currentTarget.style.backgroundColor = "rgba(168,85,247,0.08)";
+                  e.currentTarget.style.backgroundColor =
+                    "rgba(168,85,247,0.08)";
                   e.currentTarget.style.boxShadow = "none";
                 }
               }}
             >
-              {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              {theme === "light" ? (
+                <Moon className="h-4 w-4" />
+              ) : (
+                <Sun className="h-4 w-4" />
+              )}
             </button>
 
             {/* Divider */}
             <div
               className="w-px h-6"
               style={{
-                backgroundColor: isDark ? "rgba(168,85,247,0.2)" : "var(--border-color)",
+                backgroundColor: isDark
+                  ? "rgba(168,85,247,0.2)"
+                  : "var(--border-color)",
               }}
             />
 
@@ -235,13 +309,15 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
                   style={
                     isDark
                       ? {
-                          background: "linear-gradient(135deg, rgba(168,85,247,0.3), rgba(236,72,153,0.3))",
+                          background:
+                            "linear-gradient(135deg, rgba(168,85,247,0.3), rgba(236,72,153,0.3))",
                           border: "1px solid rgba(168,85,247,0.35)",
                           color: "rgba(200,180,255,0.95)",
                           boxShadow: "0 0 12px rgba(168,85,247,0.15)",
                         }
                       : {
-                          background: "linear-gradient(135deg, #ede9fe, #fce7f3)",
+                          background:
+                            "linear-gradient(135deg, #ede9fe, #fce7f3)",
                           border: "1px solid rgba(147,51,234,0.2)",
                           color: "#7c3aed",
                         }
@@ -285,18 +361,21 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
               }
               onMouseEnter={(e) => {
                 if (isDark) {
-                  e.currentTarget.style.backgroundColor = "rgba(239,68,68,0.12)";
+                  e.currentTarget.style.backgroundColor =
+                    "rgba(239,68,68,0.12)";
                   e.currentTarget.style.borderColor = "rgba(239,68,68,0.35)";
                   e.currentTarget.style.color = "rgba(252,165,165,1)";
                 } else {
                   e.currentTarget.style.color = "#ef4444";
-                  e.currentTarget.style.backgroundColor = "rgba(239,68,68,0.06)";
+                  e.currentTarget.style.backgroundColor =
+                    "rgba(239,68,68,0.06)";
                   e.currentTarget.style.borderColor = "rgba(239,68,68,0.2)";
                 }
               }}
               onMouseLeave={(e) => {
                 if (isDark) {
-                  e.currentTarget.style.backgroundColor = "rgba(239,68,68,0.06)";
+                  e.currentTarget.style.backgroundColor =
+                    "rgba(239,68,68,0.06)";
                   e.currentTarget.style.borderColor = "rgba(239,68,68,0.2)";
                   e.currentTarget.style.color = "rgba(252,165,165,0.8)";
                 } else {
@@ -317,7 +396,9 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
           <div
             className="lg:hidden border-t py-4 space-y-3"
             style={{
-              borderColor: isDark ? "rgba(168,85,247,0.15)" : "var(--border-color)",
+              borderColor: isDark
+                ? "rgba(168,85,247,0.15)"
+                : "var(--border-color)",
             }}
           >
             {/* Voice toggle mobile */}
@@ -329,19 +410,21 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
                   ? {
                       backgroundColor: "rgba(74,222,128,0.1)",
                       borderColor: "rgba(74,222,128,0.35)",
-                      color: isDark ? "rgba(134,239,172,0.95)" : "rgb(21,128,61)",
+                      color: isDark
+                        ? "rgba(134,239,172,0.95)"
+                        : "rgb(21,128,61)",
                     }
                   : isDark
-                  ? {
-                      backgroundColor: "rgba(168,85,247,0.06)",
-                      borderColor: "rgba(168,85,247,0.2)",
-                      color: "rgba(200,180,255,0.7)",
-                    }
-                  : {
-                      backgroundColor: "var(--bg-card)",
-                      borderColor: "var(--border-color)",
-                      color: "var(--text-muted)",
-                    }
+                    ? {
+                        backgroundColor: "rgba(168,85,247,0.06)",
+                        borderColor: "rgba(168,85,247,0.2)",
+                        color: "rgba(200,180,255,0.7)",
+                      }
+                    : {
+                        backgroundColor: "var(--bg-card)",
+                        borderColor: "var(--border-color)",
+                        color: "var(--text-muted)",
+                      }
               }
             >
               {voiceActive ? (
@@ -352,7 +435,14 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
                 </>
               ) : (
                 <>
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: isDark ? "rgba(168,85,247,0.4)" : "var(--border-color)" }} />
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{
+                      backgroundColor: isDark
+                        ? "rgba(168,85,247,0.4)"
+                        : "var(--border-color)",
+                    }}
+                  />
                   <MicOff className="h-4 w-4" />
                   <span>Voice Commands: Off</span>
                 </>
@@ -361,16 +451,52 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
 
             {/* Studio mobile */}
             <button
-              onClick={() => { navigate("/studio", { state: { showSplash: true } }); setMobileMenuOpen(false); }}
+              onClick={() => {
+                navigate("/studio", { state: { showSplash: true } });
+                setMobileMenuOpen(false);
+              }}
               className="w-full flex items-center space-x-2 px-3 py-2.5 rounded-lg border font-medium text-sm"
               style={
                 isDark
-                  ? { backgroundColor: "rgba(99,102,241,0.1)", borderColor: "rgba(99,102,241,0.3)", color: "rgba(165,180,252,0.95)" }
-                  : { backgroundColor: "#eef2ff", borderColor: "#c7d2fe", color: "#4f46e5" }
+                  ? {
+                      backgroundColor: "rgba(99,102,241,0.1)",
+                      borderColor: "rgba(99,102,241,0.3)",
+                      color: "rgba(165,180,252,0.95)",
+                    }
+                  : {
+                      backgroundColor: "#eef2ff",
+                      borderColor: "#c7d2fe",
+                      color: "#4f46e5",
+                    }
               }
             >
               <Sparkles className="h-4 w-4" />
               <span>Studio</span>
+            </button>
+
+            {/*   Insights mobile */}
+            <button
+              onClick={() => {
+                navigate("/insights");
+                setMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center space-x-2 px-3 py-2.5 rounded-lg border font-medium text-sm"
+              style={
+                isDark
+                  ? {
+                      backgroundColor: "rgba(168,85,247,0.08)",
+                      borderColor: "rgba(168,85,247,0.25)",
+                      color: "rgba(192,132,252,0.9)",
+                    }
+                  : {
+                      backgroundColor: "#faf5ff",
+                      borderColor: "#e9d5ff",
+                      color: "#7c3aed",
+                    }
+              }
+            >
+              <BarChart2 className="h-4 w-4" />
+              <span>Insights</span>
             </button>
 
             {/* Theme toggle mobile */}
@@ -379,14 +505,28 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
               className="w-full flex items-center space-x-2 px-3 py-2.5 rounded-lg border font-medium text-sm transition-all duration-200"
               style={
                 isDark
-                  ? { backgroundColor: "rgba(168,85,247,0.08)", borderColor: "rgba(168,85,247,0.2)", color: "rgba(200,180,255,0.8)" }
-                  : { backgroundColor: "var(--bg-card)", borderColor: "var(--border-color)", color: "var(--text-muted)" }
+                  ? {
+                      backgroundColor: "rgba(168,85,247,0.08)",
+                      borderColor: "rgba(168,85,247,0.2)",
+                      color: "rgba(200,180,255,0.8)",
+                    }
+                  : {
+                      backgroundColor: "var(--bg-card)",
+                      borderColor: "var(--border-color)",
+                      color: "var(--text-muted)",
+                    }
               }
             >
               {theme === "light" ? (
-                <><Moon className="h-4 w-4" /><span>Dark Mode</span></>
+                <>
+                  <Moon className="h-4 w-4" />
+                  <span>Dark Mode</span>
+                </>
               ) : (
-                <><Sun className="h-4 w-4" /><span>Light Mode</span></>
+                <>
+                  <Sun className="h-4 w-4" />
+                  <span>Light Mode</span>
+                </>
               )}
             </button>
 
@@ -396,23 +536,49 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
                 className="flex items-center space-x-3 px-3 py-2.5 rounded-lg"
                 style={
                   isDark
-                    ? { backgroundColor: "rgba(168,85,247,0.05)", border: "1px solid rgba(168,85,247,0.12)" }
-                    : { backgroundColor: "var(--bg-card)", border: "1px solid var(--border-color)" }
+                    ? {
+                        backgroundColor: "rgba(168,85,247,0.05)",
+                        border: "1px solid rgba(168,85,247,0.12)",
+                      }
+                    : {
+                        backgroundColor: "var(--bg-card)",
+                        border: "1px solid var(--border-color)",
+                      }
                 }
               >
                 <div
                   className="flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold flex-shrink-0"
                   style={
                     isDark
-                      ? { background: "linear-gradient(135deg, rgba(168,85,247,0.3), rgba(236,72,153,0.3))", border: "1px solid rgba(168,85,247,0.35)", color: "rgba(200,180,255,0.95)" }
-                      : { background: "linear-gradient(135deg, #ede9fe, #fce7f3)", border: "1px solid rgba(147,51,234,0.2)", color: "#7c3aed" }
+                      ? {
+                          background:
+                            "linear-gradient(135deg, rgba(168,85,247,0.3), rgba(236,72,153,0.3))",
+                          border: "1px solid rgba(168,85,247,0.35)",
+                          color: "rgba(200,180,255,0.95)",
+                        }
+                      : {
+                          background:
+                            "linear-gradient(135deg, #ede9fe, #fce7f3)",
+                          border: "1px solid rgba(147,51,234,0.2)",
+                          color: "#7c3aed",
+                        }
                   }
                 >
                   {user.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex flex-col leading-tight">
-                  <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{user.name}</span>
-                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>{user.email}</span>
+                  <span
+                    className="text-sm font-semibold"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    {user.name}
+                  </span>
+                  <span
+                    className="text-xs"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    {user.email}
+                  </span>
                 </div>
               </div>
             )}
@@ -423,8 +589,16 @@ const Header = ({ user, onLogout, voiceActive, onVoiceToggle }: HeaderProps) => 
               className="w-full flex items-center justify-center space-x-2 px-3 py-2.5 rounded-lg border font-medium text-sm transition-all duration-200"
               style={
                 isDark
-                  ? { backgroundColor: "rgba(239,68,68,0.06)", borderColor: "rgba(239,68,68,0.2)", color: "rgba(252,165,165,0.8)" }
-                  : { backgroundColor: "transparent", borderColor: "var(--border-color)", color: "var(--text-muted)" }
+                  ? {
+                      backgroundColor: "rgba(239,68,68,0.06)",
+                      borderColor: "rgba(239,68,68,0.2)",
+                      color: "rgba(252,165,165,0.8)",
+                    }
+                  : {
+                      backgroundColor: "transparent",
+                      borderColor: "var(--border-color)",
+                      color: "var(--text-muted)",
+                    }
               }
             >
               <LogOut className="h-4 w-4" />

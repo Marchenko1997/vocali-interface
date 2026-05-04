@@ -10,6 +10,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Auth from "./pages/Auth";
 import Main from "./pages/Main";
 import Studio from "./pages/Studio";
+import Insights from "./pages/Insights";
+
 
 function App() {
   return (
@@ -33,6 +35,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Studio />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/insights"
+            element={
+              <ProtectedRoute>
+                <Insights />
               </ProtectedRoute>
             }
           />
