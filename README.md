@@ -59,6 +59,17 @@ Select a mood to change the color palette and default visualization mode:
 
 Adjust how strongly the visualizer reacts to audio (0.2x – 3.0x) in real time.
 
+## Insights
+
+A dedicated dashboard at `/insights` that visualizes music trends and artist data using the **Last.fm API**.
+
+### Features
+
+- **Top Artists & Tracks** — view globally popular artists and top tracks.
+- **Interactive Charts** — features a Top Artists bar chart and a Genre donut chart for a visual breakdown of musical tags.
+- **Artist Search & Details** — search for any artist or click on an artist from the chart to dynamically view their specific top tags and statistics.
+- **Modern UI** — styled with a glassmorphism design and neon accents, fully supporting both dark and light themes.
+
 ## Voice Commands
 
 Voice control supports **English**, **Russian**, and **Ukrainian**. Toggle the microphone icon in the header to activate.
