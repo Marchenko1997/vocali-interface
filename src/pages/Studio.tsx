@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Mic, MicOff } from "lucide-react";
+import { ArrowLeft, BarChart2, Menu, Mic, MicOff, Sparkles, X } from "lucide-react";
 import { useAudioAnalyzer, type AudioSource } from "../hooks/useAudioAnalyzer";
 import { useVisualizer } from "../hooks/useVisualizer";
 import { MOODS, MODES } from "../constants/studioConfig";
@@ -19,6 +19,7 @@ const Studio = () => {
   const [sensitivity, setSensitivity] = useState(1);
   const [showSplash, setShowSplash] = useState(() => location.state?.showSplash === true);
   const [displayBpm, setDisplayBpm] = useState<number>(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const bpmUpdateTimerRef = useRef<number>(0);
   const manualMoodTimerRef = useRef<number>(0);
   const isManualMoodActive = useRef(false);
@@ -174,9 +175,9 @@ useEffect(() => {
         />
       </div>
 
-      {/* ── Header ── */}
+      {/* ── Header DESKTOP (sm+) ── */}
       <div
-        className="relative z-10 grid grid-cols-3 items-center px-6 py-3 lg:py-4"
+        className="relative z-10 hidden sm:grid grid-cols-3 items-center px-6 py-3 lg:py-4"
         style={{
           borderBottom: "1px solid rgba(255,255,255,0.06)",
           background:
@@ -222,41 +223,194 @@ useEffect(() => {
           Vocali Studio
         </h1>
 
-        {/* BPM badge */}
         <div className="justify-self-end">
-          {isListening && displayBpm > 0 && (
-            <div
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold tabular-nums"
-              style={{
-                background: "rgba(74,222,128,0.08)",
-                border: "1px solid rgba(74,222,128,0.3)",
-                color: "rgba(134,239,172,0.95)",
-                backdropFilter: "blur(8px)",
-                boxShadow: "0 0 12px rgba(74,222,128,0.12)",
-              }}
-            >
-              <span
-                className="w-1.5 h-1.5 rounded-full bg-green-400"
-                style={{ animation: "pulse 1s ease-in-out infinite" }}
-              />
-              {displayBpm} BPM
-            </div>
-          )}
-          {isListening && displayBpm === 0 && (
-            <div
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs"
-              style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.07)",
-                color: "rgba(255,255,255,0.22)",
-              }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-white/20 animate-pulse" />
-              — BPM
-            </div>
-          )}
-          {!isListening && <div className="w-20" />}
+          <button
+            onClick={() => navigate("/insights")}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border font-medium text-sm transition-all duration-200 focus:outline-none"
+            style={{
+              backgroundColor: "rgba(168,85,247,0.08)",
+              borderColor: "rgba(168,85,247,0.25)",
+              color: "rgba(192,132,252,0.9)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "rgba(168,85,247,0.15)";
+              e.currentTarget.style.boxShadow = "0 0 16px rgba(168,85,247,0.2)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "rgba(168,85,247,0.08)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >
+            <BarChart2 className="h-4 w-4" />
+            <span>Insights</span>
+          </button>
         </div>
+
+        {/* right col — пусто или BPM badge если есть */}
+        <div className="justify-self-end" />
+      </div>
+
+      {/* ── Header MOBILE (< sm) ── */}
+      <div
+        className="relative z-10 sm:hidden sticky top-0"
+        style={{
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          background: "rgba(6,6,17,0.88)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          boxShadow: "0 1px 0 rgba(168,85,247,0.1), 0 4px 24px rgba(0,0,0,0.3)",
+        }}
+      >
+        {/* top accent line */}
+        <div
+          className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent 0%, rgba(168,85,247,0.4) 30%, rgba(236,72,153,0.4) 60%, transparent 100%)",
+          }}
+        />
+
+        {/* main bar */}
+        <div className="h-14 flex items-center justify-between px-4">
+         
+          <div className="w-9 h-9" />
+
+          
+          <h1
+            className="text-base font-bold tracking-widest uppercase pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(90deg, #c084fc, #e879f9, #38bdf8, #c084fc)",
+              backgroundSize: "200% auto",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              animation: "gradient-shift 6s linear infinite",
+              filter: "drop-shadow(0 0 14px rgba(192,132,252,0.5))",
+              letterSpacing: "0.18em",
+            }}
+          >
+            Vocali Studio
+          </h1>
+
+       
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="w-9 h-9 flex items-center justify-center rounded-lg focus:outline-none flex-shrink-0"
+            style={{
+              color: "rgba(200,180,255,0.7)",
+              border: "1px solid rgba(168,85,247,0.2)",
+              backgroundColor: "rgba(168,85,247,0.06)",
+            }}
+          >
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </button>
+        </div>
+
+ 
+        {mobileMenuOpen && (
+          <div
+            className="border-t"
+            style={{ borderColor: "rgba(168,85,247,0.15)" }}
+          >
+            <div className="flex flex-col gap-3 px-4 py-4">
+           
+              <button
+                onClick={() => {
+                  navigate("/");
+                  setMobileMenuOpen(false);
+                }}
+                className="flex items-center gap-2 rounded-xl text-sm font-medium group"
+                style={{
+                  padding: "10px 12px",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  color: "rgba(255,255,255,0.45)",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(168,85,247,0.08)";
+                  e.currentTarget.style.borderColor = "rgba(168,85,247,0.25)";
+                  e.currentTarget.style.color = "rgba(216,180,254,0.85)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+                  e.currentTarget.style.color = "rgba(255,255,255,0.45)";
+                }}
+              >
+                <ArrowLeft className="w-4 h-4 flex-shrink-0 transition-transform duration-200 group-hover:-translate-x-0.5" />
+                Back to Vocali
+              </button>
+
+              {/* Insights */}
+              <button
+                onClick={() => {
+                  navigate("/insights");
+                  setMobileMenuOpen(false);
+                }}
+                className="flex items-center gap-2 rounded-xl text-sm font-medium"
+                style={{
+                  padding: "10px 12px",
+                  background: "rgba(99,102,241,0.08)",
+                  border: "1px solid rgba(99,102,241,0.25)",
+                  color: "rgba(165,180,252,0.85)",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(99,102,241,0.18)";
+                  e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)";
+                  e.currentTarget.style.boxShadow =
+                    "0 0 14px rgba(99,102,241,0.2)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(99,102,241,0.08)";
+                  e.currentTarget.style.borderColor = "rgba(99,102,241,0.25)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                <BarChart2 className="w-4 h-4 flex-shrink-0" />
+                Music Insights
+              </button>
+
+              {/* Studio current */}
+              <div
+                className="flex items-center gap-2 rounded-xl text-sm font-medium"
+                style={{
+                  padding: "10px 12px",
+                  background:
+                    "linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(236,72,153,0.08) 100%)",
+                  border: "1px solid rgba(168,85,247,0.4)",
+                  color: "rgba(216,180,254,0.95)",
+                  boxShadow:
+                    "0 0 20px rgba(168,85,247,0.12), inset 0 1px 0 rgba(255,255,255,0.05)",
+                }}
+              >
+                <Sparkles
+                  className="w-4 h-4 flex-shrink-0"
+                  style={{
+                    filter: "drop-shadow(0 0 6px rgba(192,132,252,0.6))",
+                  }}
+                />
+                Studio
+                <span
+                  className="ml-auto text flex items-center justify-center-xs px-2 py-0.5 rounded-full"
+                  style={{
+                    background: "rgba(168,85,247,0.25)",
+                    color: "rgba(216,180,254,0.9)",
+                    border: "1px solid rgba(168,85,247,0.3)",
+                  }}
+                >
+                  current
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Source Picker ── */}
