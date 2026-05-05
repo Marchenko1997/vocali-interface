@@ -35,54 +35,35 @@ const TopTracksList = ({ topTracks, isDark }: TopTracksListProps) => {
   const textMuted = isDark ? "rgba(255,255,255,0.38)" : "#6b7280";
 
   return (
-    <div
-      className="relative rounded-2xl overflow-hidden"
-      style={{
-        background: isDark
-          ? "linear-gradient(135deg, rgba(20,10,40,0.85) 0%, rgba(10,8,25,0.9) 100%)"
-          : "linear-gradient(135deg, rgba(250,245,255,0.9) 0%, rgba(237,233,254,0.8) 100%)",
-        border: `1px solid ${isDark ? "rgba(168,85,247,0.18)" : "rgba(147,51,234,0.15)"}`,
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        boxShadow: isDark
-          ? "0 0 40px rgba(168,85,247,0.08), inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 32px rgba(0,0,0,0.4)"
-          : "0 4px 24px rgba(147,51,234,0.08), inset 0 1px 0 rgba(255,255,255,0.8)",
-        padding: "24px",
-      }}
-    >
+    <div className="insights-glass-card">
       {/* Glow orb */}
       {isDark && (
         <div
-          className="absolute pointer-events-none"
+          className="insights-glow-orb"
           style={{
             top: -30,
             left: -30,
             width: 160,
             height: 160,
-            borderRadius: "50%",
             background:
               "radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 70%)",
-            filter: "blur(20px)",
           }}
         />
       )}
 
       {/* Header */}
-      <div className="relative flex items-center gap-2 mb-5">
+      <div className="insights-section-header mb-5">
         <div
-          className="w-1 h-5 rounded-full"
+          className="insights-section-bar"
           style={{
             background: "linear-gradient(180deg, #f87171, #f59e0b)",
             boxShadow: "0 0 8px rgba(248,113,113,0.6)",
           }}
         />
         <h2
-          className="text-sm font-bold tracking-wider uppercase"
+          className="insights-section-title"
           style={{
-            background: "linear-gradient(90deg, #f87171, #f59e0b)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
+            backgroundImage: "linear-gradient(90deg, #f87171, #f59e0b)",
             filter: "drop-shadow(0 0 8px rgba(248,113,113,0.4))",
           }}
         >

@@ -44,14 +44,10 @@ const CustomTooltip = ({
   if (!active || !payload?.length) return null;
   return (
     <div
+      className="insights-tooltip"
       style={{
-        background: isDark ? "rgba(15,10,30,0.92)" : "rgba(255,255,255,0.92)",
-        border: "1px solid rgba(168,85,247,0.35)",
         borderRadius: 10,
         padding: "8px 12px",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        boxShadow: "0 0 20px rgba(168,85,247,0.2), 0 4px 16px rgba(0,0,0,0.3)",
       }}
     >
       <p
@@ -80,54 +76,35 @@ const GenreDonut = ({ tags, selectedArtist, isDark }: GenreDonutProps) => {
   const pieData = tags.map((t) => ({ name: t.name, value: t.count }));
 
   return (
-    <div
-      className="relative rounded-2xl overflow-hidden"
-      style={{
-        background: isDark
-          ? "linear-gradient(135deg, rgba(20,10,40,0.85) 0%, rgba(10,8,25,0.9) 100%)"
-          : "linear-gradient(135deg, rgba(250,245,255,0.9) 0%, rgba(237,233,254,0.8) 100%)",
-        border: `1px solid ${isDark ? "rgba(168,85,247,0.18)" : "rgba(147,51,234,0.15)"}`,
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        boxShadow: isDark
-          ? "0 0 40px rgba(168,85,247,0.08), inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 32px rgba(0,0,0,0.4)"
-          : "0 4px 24px rgba(147,51,234,0.08), inset 0 1px 0 rgba(255,255,255,0.8)",
-        padding: "24px",
-      }}
-    >
+    <div className="insights-glass-card">
       {/* Glow orb */}
       {isDark && (
         <div
-          className="absolute pointer-events-none"
+          className="insights-glow-orb"
           style={{
             bottom: -40,
             left: -40,
             width: 180,
             height: 180,
-            borderRadius: "50%",
             background:
               "radial-gradient(circle, rgba(236,72,153,0.1) 0%, transparent 70%)",
-            filter: "blur(20px)",
           }}
         />
       )}
 
       {/* Header */}
-      <div className="relative flex items-center gap-2 mb-5">
+      <div className="insights-section-header mb-5">
         <div
-          className="w-1 h-5 rounded-full"
+          className="insights-section-bar"
           style={{
             background: "linear-gradient(180deg, #e879f9, #38bdf8)",
             boxShadow: "0 0 8px rgba(232,121,249,0.6)",
           }}
         />
         <h2
-          className="text-sm font-bold tracking-wider uppercase"
+          className="insights-section-title"
           style={{
-            background: "linear-gradient(90deg, #e879f9, #38bdf8)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
+            backgroundImage: "linear-gradient(90deg, #e879f9, #38bdf8)",
             filter: "drop-shadow(0 0 8px rgba(232,121,249,0.4))",
           }}
         >

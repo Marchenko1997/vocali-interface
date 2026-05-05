@@ -1031,3 +1031,70 @@ input:-webkit-autofill:focus {
 [data-theme="dark"] .insights-scroll-fade {
   background: linear-gradient(to bottom, transparent, rgba(6, 6, 17, 0.9));
 }
+
+/* Glassmorphism card wrapper for chart panels */
+.insights-glass-card {
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+  padding: 24px;
+  border: 1px solid;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+[data-theme="light"] .insights-glass-card {
+  background: linear-gradient(135deg, rgba(250, 245, 255, 0.9) 0%, rgba(237, 233, 254, 0.8) 100%);
+  border-color: rgba(147, 51, 234, 0.15);
+  box-shadow: 0 4px 24px rgba(147, 51, 234, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+[data-theme="dark"] .insights-glass-card {
+  background: linear-gradient(135deg, rgba(20, 10, 40, 0.85) 0%, rgba(10, 8, 25, 0.9) 100%);
+  border-color: rgba(168, 85, 247, 0.18);
+  box-shadow: 0 0 40px rgba(168, 85, 247, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Section header row (accent bar + gradient title) */
+.insights-section-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.insights-section-bar {
+  width: 0.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+}
+
+.insights-section-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Soft radial glow blob inside chart cards */
+.insights-glow-orb {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(20px);
+}
+
+/* Custom recharts tooltip wrapper */
+.insights-tooltip {
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.2), 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+[data-theme="light"] .insights-tooltip {
+  background: rgba(255, 255, 255, 0.92);
+}
+[data-theme="dark"] .insights-tooltip {
+  background: rgba(15, 10, 30, 0.92);
+}
