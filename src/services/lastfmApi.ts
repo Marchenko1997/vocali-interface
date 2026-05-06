@@ -22,6 +22,9 @@ export const lastfm = {
 
   getArtistInfo: (artist: string) => get("artist.getinfo", { artist }),
 
+  getArtistTopTracks: (artist: string, limit = 10) =>
+    get("artist.gettoptracks", { artist, limit: String(limit) }),
+
   getArtistTopTags: (artist: string) => get("artist.gettoptags", { artist }),
 
   getSimilarTracks: (artist: string, track: string) =>

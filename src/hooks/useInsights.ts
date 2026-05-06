@@ -9,6 +9,8 @@ export const useInsights = () => {
 
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [artistTopTracks, setArtistTopTracks] = useState<TopTrack[]>([]);
+  const [artistTracksLoading, setArtistTracksLoading] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +44,15 @@ export const useInsights = () => {
 
 
     }, [selectedArtist]);
+  
+useEffect(() => {
+  if (!selectedArtist) return;
+  setArtistTracksLoading(true);
+  lastfm
+    .getArtistTopTracks(selectedArtist, 10)
+    .then((data) => setArtistTopTracks(data.toptracks?.track ?? []))
+    .finally(() => setArtistTracksLoading(false));
+}, [selectedArtist]);
 
     const handleSearch = useCallback(async() => {
         if (!searchQuery.trim()) return;
@@ -65,6 +76,9 @@ export const useInsights = () => {
     setSelectedArtist,
     searchQuery,
     setSearchQuery,
+   
+    artistTopTracks,
+    artistTracksLoading,
     handleSearch,
     loading,
     error,

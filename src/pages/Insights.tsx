@@ -33,6 +33,8 @@ const Insights = () => {
     searchQuery,
     setSearchQuery,
     handleSearch,
+    artistTopTracks,
+    artistTracksLoading,
     loading,
     error,
   } = useInsights();
@@ -84,7 +86,13 @@ const Insights = () => {
                 selectedArtist={selectedArtist}
                 isDark={isDark}
               />
-              <TopTracksList topTracks={topTracks} isDark={isDark} />
+              <TopTracksList
+                topTracks={topTracks}
+                artistTopTracks={artistTopTracks}
+                selectedArtist={selectedArtist}
+                artistTracksLoading={artistTracksLoading}
+                isDark={isDark}
+              />
             </div>
           </>
         )}
