@@ -17,6 +17,9 @@ export const lastfm = {
   getTopArtists: (limit = 10) =>
     get("chart.gettopartists", { limit: String(limit) }),
 
+  getTagTopArtists: (tag: string, limit = 12) =>
+  get("tag.gettopartists", { tag, limit: String(limit) }),
+
   getTopTracks: (limit = 10) =>
     get("chart.gettoptracks", { limit: String(limit) }),
 
@@ -30,6 +33,11 @@ export const lastfm = {
   getSimilarTracks: (artist: string, track: string) =>
     get("track.getsimilar", { artist, track, limit: "6" }),
 
+  getArtistTopAlbums: (artist: string, limit = 8) =>
+    get("artist.gettopalbums", { artist, limit: String(limit) }),
+
   searchArtist: (query: string) =>
     get("artist.search", { artist: query, limit: "8" }),
 };
+
+

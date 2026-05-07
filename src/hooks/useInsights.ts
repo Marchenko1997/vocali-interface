@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { lastfm } from "../services/lastfmApi";
-import type { TopArtist, TopTrack, Tag } from "../types/insights";
+import type { TopArtist, TopTrack, Tag, ArtistAlbum } from "../types/insights";
 
 export const useInsights = () => {
   const [topArtists, setTopArtists] = useState<TopArtist[]>([]);
@@ -11,6 +11,9 @@ export const useInsights = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [artistTopTracks, setArtistTopTracks] = useState<TopTrack[]>([]);
   const [artistTracksLoading, setArtistTracksLoading] = useState(false);
+  const [artistAlbums, setArtistAlbums] = useState<ArtistAlbum[]>([]);
+  const [artistAlbumsLoading, setArtistAlbumsLoading] = useState(false);
+
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +48,15 @@ export const useInsights = () => {
 
     }, [selectedArtist]);
   
+  useEffect(() => {
+    if (!selectedArtist) return;
+    setArtistAlbumsLoading(true);
+    lastfm
+      .getArtistTopAlbums(selectedArtist, 8)
+      .then((data) => setArtistAlbums(data.topalbums?.album ?? []))
+      .finally(() => setArtistAlbumsLoading(false));
+  }, [selectedArtist]);
+  
 useEffect(() => {
   if (!selectedArtist) return;
   setArtistTracksLoading(true);
@@ -76,7 +88,8 @@ useEffect(() => {
     setSelectedArtist,
     searchQuery,
     setSearchQuery,
-   
+    artistAlbums,
+    artistAlbumsLoading,
     artistTopTracks,
     artistTracksLoading,
     handleSearch,

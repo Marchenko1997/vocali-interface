@@ -9,20 +9,21 @@ import TopTracksList from "../components/insights/TopTracksList";
 import SplashScreen from "../components/SplashScreen";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import TopAlbumsGrid from "../components/insights/TopAlbumsGrid";
 
 const Insights = () => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
-    const location = useLocation();
+  const location = useLocation();
   const [showSplash, setShowSplash] = useState(
     () => location.state?.showSplash === true,
   );
 
- useEffect(() => {
-   if (!showSplash) return;
-   const timer = setTimeout(() => setShowSplash(false), 5000);
-   return () => clearTimeout(timer);
- }, []);
+  useEffect(() => {
+    if (!showSplash) return;
+    const timer = setTimeout(() => setShowSplash(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const {
     topArtists,
@@ -35,6 +36,8 @@ const Insights = () => {
     handleSearch,
     artistTopTracks,
     artistTracksLoading,
+    artistAlbums,
+    artistAlbumsLoading,
     loading,
     error,
   } = useInsights();
@@ -94,6 +97,14 @@ const Insights = () => {
                 isDark={isDark}
               />
             </div>
+            {selectedArtist && (
+              <TopAlbumsGrid
+                albums={artistAlbums}
+                selectedArtist={selectedArtist}
+                loading={artistAlbumsLoading}
+                isDark={isDark}
+              />
+            )}
           </>
         )}
       </main>

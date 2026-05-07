@@ -7,6 +7,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { Tag } from "../../types/insights";
+import { useState } from "react";
+import TagArtistsModal from "./TagArtistsModal";
 
 const COLORS = [
   "#a855f7",
@@ -40,7 +42,11 @@ const CustomTooltip = ({
   active?: boolean;
   payload?: Array<{ name: string; value: number; payload: { name: string } }>;
   isDark: boolean;
-}) => {
+  }) => {
+  
+
+  
+  
   if (!active || !payload?.length) return null;
   return (
     <div
@@ -74,6 +80,7 @@ const CustomTooltip = ({
 const GenreDonut = ({ tags, selectedArtist, isDark }: GenreDonutProps) => {
   const textMuted = isDark ? "rgba(255,255,255,0.35)" : "#9ca3af";
   const pieData = tags.map((t) => ({ name: t.name, value: t.count }));
+    const [activeTag, setActiveTag] = useState<string | null>(null);
 
   return (
     <div className="insights-glass-card">
@@ -136,6 +143,9 @@ const GenreDonut = ({ tags, selectedArtist, isDark }: GenreDonutProps) => {
               outerRadius={95}
               paddingAngle={4}
               dataKey="value"
+              onClick={(data: { name?: string }) => {
+                if (data?.name) setActiveTag(data.name);
+              }}
               style={{
                 filter: isDark
                   ? "drop-shadow(0 0 10px rgba(168,85,247,0.25))"
@@ -201,6 +211,12 @@ const GenreDonut = ({ tags, selectedArtist, isDark }: GenreDonutProps) => {
           </p>
         </div>
       )}
+      
+      <TagArtistsModal
+        tag={activeTag}
+        isDark={isDark}
+        onClose={() => setActiveTag(null)}
+      />
     </div>
   );
 };
