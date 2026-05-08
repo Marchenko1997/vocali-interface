@@ -10,6 +10,9 @@ import SplashScreen from "../components/SplashScreen";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import TopAlbumsGrid from "../components/insights/TopAlbumsGrid";
+import { lastfm } from "../services/lastfmApi";
+import GenreArtistsModal from "../components/insights/GenreArtistsModal";
+
 
 const Insights = () => {
   const { theme } = useTheme();
@@ -18,6 +21,27 @@ const Insights = () => {
   const [showSplash, setShowSplash] = useState(
     () => location.state?.showSplash === true,
   );
+  const [genreModalOpen, setGenreModalOpen] = useState(false);
+  const [genreArtists, setGenreArtists] = useState<any[]>([]);
+  const [genreName, setGenreName] = useState("");
+
+
+  const handleGenreSelect = async (genre: string) => {
+    try {
+      const data = await lastfm.getTagTopArtists(genre, 12);
+
+      const artists = (data.topartists?.artist ?? []).map((a: any) => ({
+        ...a,
+        spotifyImg: "",
+      }));
+
+      setGenreName(genre);
+      setGenreArtists(artists);
+      setGenreModalOpen(true);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     if (!showSplash) return;
@@ -88,7 +112,16 @@ const Insights = () => {
                 tags={tags}
                 selectedArtist={selectedArtist}
                 isDark={isDark}
-              />
+                onGenreClick={handleGenreSelect}
+              >
+                <GenreArtistsModal
+                  isOpen={genreModalOpen}
+                  onClose={() => setGenreModalOpen(false)}
+                  genreName={genreName}
+                  artists={genreArtists}
+                  isDark={isDark}
+                />
+              </GenreDonut>
               <TopTracksList
                 topTracks={topTracks}
                 artistTopTracks={artistTopTracks}

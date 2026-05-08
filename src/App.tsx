@@ -10,6 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Auth from "./pages/Auth";
 import Main from "./pages/Main";
 import Studio from "./pages/Studio";
+;
 import Insights from "./pages/Insights";
 
 
@@ -17,6 +18,7 @@ function App() {
   return (
     <Provider store={store}>
       <Router>
+    
         <Routes>
           {/* Public routes */}
           <Route path="/auth" element={<Auth />} />

@@ -7,8 +7,9 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { Tag } from "../../types/insights";
-import { useState } from "react";
-import TagArtistsModal from "./TagArtistsModal";
+import type { ReactNode } from "react";
+
+
 
 const COLORS = [
   "#a855f7",
@@ -18,7 +19,6 @@ const COLORS = [
   "#f59e0b",
   "#f87171",
 ];
-
 const GLOW_COLORS = [
   "rgba(168,85,247,0.6)",
   "rgba(236,72,153,0.6)",
@@ -32,6 +32,8 @@ interface GenreDonutProps {
   tags: Tag[];
   selectedArtist: string | null;
   isDark: boolean;
+  onGenreClick: (genre: string) => void;
+  children?: ReactNode;
 }
 
 const CustomTooltip = ({
@@ -42,19 +44,12 @@ const CustomTooltip = ({
   active?: boolean;
   payload?: Array<{ name: string; value: number; payload: { name: string } }>;
   isDark: boolean;
-  }) => {
-  
-
-  
-  
+}) => {
   if (!active || !payload?.length) return null;
   return (
     <div
       className="insights-tooltip"
-      style={{
-        borderRadius: 10,
-        padding: "8px 12px",
-      }}
+      style={{ borderRadius: 10, padding: "8px 12px" }}
     >
       <p
         className="text-xs font-semibold"
@@ -77,14 +72,16 @@ const CustomTooltip = ({
   );
 };
 
-const GenreDonut = ({ tags, selectedArtist, isDark }: GenreDonutProps) => {
+const GenreDonut = ({ tags, selectedArtist, isDark, onGenreClick, children }: GenreDonutProps) => {
   const textMuted = isDark ? "rgba(255,255,255,0.35)" : "#9ca3af";
   const pieData = tags.map((t) => ({ name: t.name, value: t.count }));
-    const [activeTag, setActiveTag] = useState<string | null>(null);
 
+
+
+  
   return (
-    <div className="insights-glass-card">
-      {/* Glow orb */}
+    <div className="insights-glass-card relative overflow-visible">
+      {children}
       {isDark && (
         <div
           className="insights-glow-orb"
@@ -99,7 +96,6 @@ const GenreDonut = ({ tags, selectedArtist, isDark }: GenreDonutProps) => {
         />
       )}
 
-      {/* Header */}
       <div className="insights-section-header mb-5">
         <div
           className="insights-section-bar"
@@ -131,7 +127,6 @@ const GenreDonut = ({ tags, selectedArtist, isDark }: GenreDonutProps) => {
         </h2>
       </div>
 
-      {/* Chart or empty */}
       {pieData.length > 0 ? (
         <ResponsiveContainer width="100%" height={240}>
           <PieChart>
@@ -144,9 +139,10 @@ const GenreDonut = ({ tags, selectedArtist, isDark }: GenreDonutProps) => {
               paddingAngle={4}
               dataKey="value"
               onClick={(data: { name?: string }) => {
-                if (data?.name) setActiveTag(data.name);
+                if (data?.name) onGenreClick(data.name);
               }}
               style={{
+                cursor: "pointer",
                 filter: isDark
                   ? "drop-shadow(0 0 10px rgba(168,85,247,0.25))"
                   : "none",
@@ -211,12 +207,6 @@ const GenreDonut = ({ tags, selectedArtist, isDark }: GenreDonutProps) => {
           </p>
         </div>
       )}
-      
-      <TagArtistsModal
-        tag={activeTag}
-        isDark={isDark}
-        onClose={() => setActiveTag(null)}
-      />
     </div>
   );
 };
