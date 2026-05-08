@@ -7,9 +7,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { Tag } from "../../types/insights";
-import type { ReactNode } from "react";
-
-
 
 const COLORS = [
   "#a855f7",
@@ -33,7 +30,6 @@ interface GenreDonutProps {
   selectedArtist: string | null;
   isDark: boolean;
   onGenreClick: (genre: string) => void;
-  children?: ReactNode;
 }
 
 const CustomTooltip = ({
@@ -72,16 +68,12 @@ const CustomTooltip = ({
   );
 };
 
-const GenreDonut = ({ tags, selectedArtist, isDark, onGenreClick, children }: GenreDonutProps) => {
+const GenreDonut = ({ tags, selectedArtist, isDark, onGenreClick }: GenreDonutProps) => {
   const textMuted = isDark ? "rgba(255,255,255,0.35)" : "#9ca3af";
   const pieData = tags.map((t) => ({ name: t.name, value: t.count }));
 
-
-
-  
   return (
-    <div className="insights-glass-card relative overflow-visible">
-      {children}
+    <div className="insights-glass-card relative">
       {isDark && (
         <div
           className="insights-glow-orb"

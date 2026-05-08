@@ -108,12 +108,13 @@ const Insights = () => {
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <GenreDonut
-                tags={tags}
-                selectedArtist={selectedArtist}
-                isDark={isDark}
-                onGenreClick={handleGenreSelect}
-              >
+              <div className="relative">
+                <GenreDonut
+                  tags={tags}
+                  selectedArtist={selectedArtist}
+                  isDark={isDark}
+                  onGenreClick={handleGenreSelect}
+                />
                 <GenreArtistsModal
                   isOpen={genreModalOpen}
                   onClose={() => setGenreModalOpen(false)}
@@ -121,7 +122,7 @@ const Insights = () => {
                   artists={genreArtists}
                   isDark={isDark}
                 />
-              </GenreDonut>
+              </div>
               <TopTracksList
                 topTracks={topTracks}
                 artistTopTracks={artistTopTracks}

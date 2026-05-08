@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 interface Artist {
   name: string;
@@ -39,32 +40,44 @@ const GenreArtistsModal = ({
   artists,
   isDark,
 }: GenreArtistsModalProps) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="absolute top-0 left-0 z-50 overflow-visible">
+    <div
+      ref={modalRef}
+      className="absolute top-0 left-full ml-4 z-50 animate-in fade-in slide-in-from-left-2 duration-300"
+    >
       <div
-        className="absolute top-0 left-full ml-4 pointer-events-auto animate-in fade-in slide-in-from-left-2 duration-300"
-        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: "relative",
+          width: 320,
+          borderRadius: 24,
+          overflow: "hidden",
+          backdropFilter: "blur(20px)",
+          background: isDark
+            ? "linear-gradient(135deg, rgba(22,10,45,0.98), rgba(10,8,28,0.99))"
+            : "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(245,243,255,0.96))",
+          border: isDark
+            ? "1px solid rgba(168,85,247,0.25)"
+            : "1px solid rgba(168,85,247,0.12)",
+          boxShadow: isDark
+            ? "0 0 60px rgba(168,85,247,0.18), 0 18px 60px rgba(0,0,0,0.7)"
+            : "0 18px 60px rgba(168,85,247,0.12)",
+        }}
       >
-        <div
-          style={{
-            position: "relative",
-            width: 320,
-            borderRadius: 24,
-            overflow: "hidden",
-            backdropFilter: "blur(20px)",
-            background: isDark
-              ? "linear-gradient(135deg, rgba(22,10,45,0.98), rgba(10,8,28,0.99))"
-              : "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(245,243,255,0.96))",
-            border: isDark
-              ? "1px solid rgba(168,85,247,0.25)"
-              : "1px solid rgba(168,85,247,0.12)",
-            boxShadow: isDark
-              ? "0 0 60px rgba(168,85,247,0.18), 0 18px 60px rgba(0,0,0,0.7)"
-              : "0 18px 60px rgba(168,85,247,0.12)",
-          }}
-        >
           {/* top neon line */}
           <div
             style={{
@@ -189,7 +202,6 @@ const GenreArtistsModal = ({
           </div>
         </div>
       </div>
-    </div>
   );
 };
 
