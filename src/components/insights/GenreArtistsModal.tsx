@@ -44,22 +44,45 @@ const GenreArtistsModal = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const [artistsWithImages, setArtistsWithImages] = useState(artists);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleMouseDown = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", handleMouseDown);
-    return () => document.removeEventListener("mousedown", handleMouseDown);
-  }, [isOpen, onClose]);
+useEffect(() => {
+  if (!isOpen) return;
+
+  const handleMouseDown = (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+
+    const clickedInsideModal =
+      modalRef.current?.contains(target);
+
+    const clickedGenreDonut =
+      target.closest(".genre-donut-wrapper");
+
+    if (!clickedInsideModal && !clickedGenreDonut) {
+      onClose();
+    }
+  };
+
+  document.addEventListener("mousedown", handleMouseDown);
+
+  return () => {
+    document.removeEventListener("mousedown", handleMouseDown);
+  };
+}, [isOpen, onClose]);
 
 
 useEffect(() => {
-  if (!artists.length) return;
+  if (!artists.length) {
+    setArtistsWithImages([]);
+    return;
+  }
 
-  setArtistsWithImages(artists);
+  let cancelled = false;
+
+  setArtistsWithImages(
+    artists.map((artist) => ({
+      ...artist,
+      spotifyImg: "",
+    })),
+  );
 
   artists.forEach(async (artist: any) => {
     try {
@@ -67,11 +90,15 @@ useEffect(() => {
 
       const spotifySearch = await searchSpotifyArtist(artist.name);
 
+      if (cancelled) return;
+
       const spotifyArtist = spotifySearch?.tracks?.items?.[0]?.artists?.[0];
 
       if (!spotifyArtist?.id) return;
 
       const data = await getArtistImage(spotifyArtist.id);
+
+      if (cancelled) return;
 
       setArtistsWithImages((prev) =>
         prev.map((a) =>
@@ -87,6 +114,10 @@ useEffect(() => {
       console.error(e);
     }
   });
+
+  return () => {
+    cancelled = true;
+  };
 }, [artists]);
 
   if (!isOpen) return null;

@@ -150,7 +150,7 @@ const TopTracksList = ({
                 >
                   {track.image?.[1]?.["#text"] ? (
                     <img
-                      src={track.image[1]["#text"]}
+                      src={track.spotifyImage || track.image?.[1]?.["#text"]}
                       alt={track.name}
                       className="w-full h-full object-cover"
                     />
@@ -192,7 +192,9 @@ const TopTracksList = ({
             ))}
           </div>
         )}
-        <div className="insights-scroll-fade" />
+        {!artistTracksLoading && tracksToShow.length > 0 && (
+          <div className="insights-scroll-fade" />
+        )}
       </div>
     </div>
   );

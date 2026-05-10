@@ -26,3 +26,14 @@ export const searchSpotifyArtist = async (query: string) => {
 
   return res.data;
 };
+
+export const searchSpotifyTrack = async (query: string) => {
+  const res = await api.get("/spotify/search", {
+    params: {
+      q: query,
+      limit: 1,
+    },
+  });
+
+  return res.data;
+};

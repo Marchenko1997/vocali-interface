@@ -73,7 +73,7 @@ const GenreDonut = ({ tags, selectedArtist, isDark, onGenreClick }: GenreDonutPr
   const pieData = tags.map((t) => ({ name: t.name, value: t.count }));
 
   return (
-    <div className="insights-glass-card relative">
+    <div className="insights-glass-card relative genre-donut-wrapper">
       {isDark && (
         <div
           className="insights-glow-orb"

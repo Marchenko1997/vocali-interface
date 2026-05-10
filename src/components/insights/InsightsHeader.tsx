@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Search, Sparkles, BarChart2, Menu, X } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
+import BackButton from "../../shared/BackButton";
 
 interface InsightsHeaderProps {
   searchQuery: string;
@@ -63,30 +64,12 @@ const InsightsHeader = ({
       <div className="px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Left */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none"
-            style={{
-              background: isDark
-                ? "rgba(255,255,255,0.04)"
-                : "rgba(0,0,0,0.04)",
-              border: `1px solid ${cardBorder}`,
-              color: textMuted,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = textPrimary;
-              e.currentTarget.style.borderColor = isDark
-                ? "rgba(168,85,247,0.3)"
-                : "rgba(147,51,234,0.3)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = textMuted;
-              e.currentTarget.style.borderColor = cardBorder;
-            }}
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Home</span>
-          </button>
+          <BackButton
+            isDark={isDark}
+            cardBorder={cardBorder}
+            textMuted={textMuted}
+            textPrimary={textPrimary}
+          />
 
           <button
             onClick={() => navigate("/studio", { state: { showSplash: true } })}

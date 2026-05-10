@@ -8,6 +8,7 @@ import { MoodPicker } from "../components/studio/MoodPicker";
 import { ModeSwitcher } from "../components/studio/ModeSwitcher";
 import SplashScreen from "../components/SplashScreen";
 import { useMood, type MoodId } from "../context/MoodContext";
+import BackButton from "../shared/BackButton";
 
 const Studio = () => {
   const navigate = useNavigate();
@@ -23,6 +24,13 @@ const Studio = () => {
   const bpmUpdateTimerRef = useRef<number>(0);
   const manualMoodTimerRef = useRef<number>(0);
   const isManualMoodActive = useRef(false);
+
+
+  const isDark = true;
+
+  const textMuted = "rgba(255,255,255,0.45)";
+  const textPrimary = "rgba(255,255,255,0.9)";
+  const cardBorder = "rgba(255,255,255,0.08)";
 
   const { start, stop, getAnalyzerData } = useAudioAnalyzer();
   const { draw, mode, setMode, activeMood, handleMoodChange, currentBpmRef, resetBpm } =
@@ -92,6 +100,9 @@ useEffect(() => {
           : "dark";
   setMood(id, "auto-bpm");
 }, [displayBpm, isListening]);
+
+  
+  
 
 
  if (showSplash) {
@@ -177,7 +188,7 @@ useEffect(() => {
 
       {/* ── Header DESKTOP (sm+) ── */}
       <div
-        className="relative z-10 hidden sm:grid grid-cols-3 items-center px-6 py-3 lg:py-4"
+        className="relative z-10 hidden sm:grid grid-cols-3 items-center justify-between px-6 py-3 lg:py-4"
         style={{
           borderBottom: "1px solid rgba(255,255,255,0.06)",
           background:
@@ -188,24 +199,15 @@ useEffect(() => {
             "0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(0,0,0,0.3)",
         }}
       >
-        <button
-          onClick={() => navigate("/")}
-          className="flex items-center gap-2 text-sm focus:outline-none group justify-self-start"
-          style={{
-            color: "rgba(255,255,255,0.38)",
-            transition: "color 0.2s ease",
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.color = "rgba(255,255,255,0.85)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color = "rgba(255,255,255,0.38)")
-          }
-        >
-          <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
-          <span>Back to Vocali</span>
-        </button>
-
+        {" "}
+        <div className="justify-self-start">
+          <BackButton
+            isDark={isDark}
+            cardBorder={cardBorder}
+            textMuted={textMuted}
+            textPrimary={textPrimary}
+          />
+        </div>
         <h1
           className="text-lg lg:text-xl font-bold tracking-widest uppercase text-center justify-self-center"
           style={{
@@ -222,7 +224,6 @@ useEffect(() => {
         >
           Vocali Studio
         </h1>
-
         <div className="justify-self-end">
           <button
             onClick={() => navigate("/insights")}
@@ -245,7 +246,6 @@ useEffect(() => {
             <span>Insights</span>
           </button>
         </div>
-
         {/* right col — пусто или BPM badge если есть */}
         <div className="justify-self-end" />
       </div>
@@ -272,10 +272,8 @@ useEffect(() => {
 
         {/* main bar */}
         <div className="h-14 flex items-center justify-between px-4">
-         
           <div className="w-9 h-9" />
 
-          
           <h1
             className="text-base font-bold tracking-widest uppercase pointer-events-none"
             style={{
@@ -293,7 +291,6 @@ useEffect(() => {
             Vocali Studio
           </h1>
 
-       
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="w-9 h-9 flex items-center justify-center rounded-lg focus:outline-none flex-shrink-0"
@@ -311,14 +308,12 @@ useEffect(() => {
           </button>
         </div>
 
- 
         {mobileMenuOpen && (
           <div
             className="border-t"
             style={{ borderColor: "rgba(168,85,247,0.15)" }}
           >
             <div className="flex flex-col gap-3 px-4 py-4">
-           
               <button
                 onClick={() => {
                   navigate("/");

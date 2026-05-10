@@ -12,6 +12,7 @@ export interface TopTrack {
   playcount: string;
   listeners: string;
   image: { "#text": string; size: string }[];
+  spotifyImage?: string;
 }
 
 export interface Tag {
