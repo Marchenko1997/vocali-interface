@@ -14,6 +14,8 @@ import { lastfm } from "../services/lastfmApi";
 import GenreArtistsModal from "../components/insights/GenreArtistsModal";
 
 
+
+
 const Insights = () => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -26,22 +28,24 @@ const Insights = () => {
   const [genreName, setGenreName] = useState("");
 
 
-  const handleGenreSelect = async (genre: string) => {
-    try {
-      const data = await lastfm.getTagTopArtists(genre, 12);
+const handleGenreSelect = async (genre: string) => {
+  try {
+    const data = await lastfm.getTagTopArtists(genre, 12);
 
-      const artists = (data.topartists?.artist ?? []).map((a: any) => ({
-        ...a,
-        spotifyImg: "",
-      }));
+    const artists = (data.topartists?.artist ?? []).map((a: any) => ({
+      ...a,
+      spotifyImg: "",
+    }));
 
-      setGenreName(genre);
-      setGenreArtists(artists);
-      setGenreModalOpen(true);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    setGenreName(genre);
+    setGenreArtists(artists);
+
+ 
+    setGenreModalOpen(true);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   useEffect(() => {
     if (!showSplash) return;

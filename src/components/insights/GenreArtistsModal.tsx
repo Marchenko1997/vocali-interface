@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { getArtistImage, searchSpotifyArtist } from "../../services/spotify";
 
 interface Artist {
   name: string;
@@ -41,6 +42,7 @@ const GenreArtistsModal = ({
   isDark,
 }: GenreArtistsModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const [artistsWithImages, setArtistsWithImages] = useState(artists);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -53,7 +55,43 @@ const GenreArtistsModal = ({
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, [isOpen, onClose]);
 
+
+useEffect(() => {
+  if (!artists.length) return;
+
+  setArtistsWithImages(artists);
+
+  artists.forEach(async (artist: any) => {
+    try {
+      if (!artist.name) return;
+
+      const spotifySearch = await searchSpotifyArtist(artist.name);
+
+      const spotifyArtist = spotifySearch?.tracks?.items?.[0]?.artists?.[0];
+
+      if (!spotifyArtist?.id) return;
+
+      const data = await getArtistImage(spotifyArtist.id);
+
+      setArtistsWithImages((prev) =>
+        prev.map((a) =>
+          a.name === artist.name
+            ? {
+                ...a,
+                spotifyImg: data.image,
+              }
+            : a,
+        ),
+      );
+    } catch (e) {
+      console.error(e);
+    }
+  });
+}, [artists]);
+
   if (!isOpen) return null;
+
+ 
 
   return (
     <div
@@ -142,7 +180,7 @@ const GenreArtistsModal = ({
 
           {/* artists grid */}
           <div className="grid grid-cols-4 gap-2 p-4 pt-0 max-h-[420px] overflow-y-auto">
-            {artists.map((artist, i) => (
+           {artistsWithImages.map((artist, i) => (
               <a
                 key={artist.name}
                 href={artist.url}

@@ -53,7 +53,9 @@ useEffect(() => {
   }, [spotifyQuery]);
 
   const handleSpotifySearch = useCallback(
+  
     async (newSearch = false) => {
+      console.log("handleSpotifySearch CALLED");
       if (!spotifyQuery.trim()) return;
       if (isFetchingRef.current) return;
 
@@ -76,7 +78,22 @@ useEffect(() => {
 
         if (currentSearchId !== searchIdRef.current) return;
 
-        const newItems: any[] = res?.tracks?.items ?? [];
+      console.log("Spotify raw items:", res?.tracks?.items);
+
+      const newItems: any[] =
+        res?.tracks?.items?.map((track: any) => ({
+          ...track,
+
+          artists: track.artists.map((artist: any) => {
+            console.log("Artist before mapping:", artist);
+
+            return {
+              id: artist.id,
+              name: artist.name,
+              url: artist.external_urls.spotify,
+            };
+          }),
+        })) ?? [];
 
         setSpotifyResults((prev) => {
           if (newSearch) return newItems;
@@ -170,7 +187,15 @@ useEffect(() => {
     async (query: string) => {
       try {
         const res = await searchSpotify(query, 0);
-        const items: any[] = res?.tracks?.items ?? [];
+        const items: any[] =
+          res?.tracks?.items?.map((track: any) => ({
+            ...track,
+            artists: track.artists.map((artist: any) => ({
+              id: artist.id,
+              name: artist.name,
+              url: artist.external_urls.spotify,
+            })),
+          })) ?? [];
 
         if (items.length > 0) {
           // Блокируем дебаунс перед setSpotifyQuery
