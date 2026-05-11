@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, Sparkles, BarChart2, Menu, X } from "lucide-react";
+import {  Search, Sparkles, BarChart2, Menu, X } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import BackButton from "../../shared/BackButton";
 
