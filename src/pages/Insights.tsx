@@ -12,9 +12,7 @@ import { useLocation } from "react-router-dom";
 import TopAlbumsGrid from "../components/insights/TopAlbumsGrid";
 import { lastfm } from "../services/lastfmApi";
 import GenreArtistsModal from "../components/insights/GenreArtistsModal";
-
-
-
+import DiscoverySection from "../components/insights/DiscoverySection";
 
 const Insights = () => {
   const { theme } = useTheme();
@@ -27,25 +25,23 @@ const Insights = () => {
   const [genreArtists, setGenreArtists] = useState<any[]>([]);
   const [genreName, setGenreName] = useState("");
 
+  const handleGenreSelect = async (genre: string) => {
+    try {
+      const data = await lastfm.getTagTopArtists(genre, 12);
 
-const handleGenreSelect = async (genre: string) => {
-  try {
-    const data = await lastfm.getTagTopArtists(genre, 12);
+      const artists = (data.topartists?.artist ?? []).map((a: any) => ({
+        ...a,
+        spotifyImg: "",
+      }));
 
-    const artists = (data.topartists?.artist ?? []).map((a: any) => ({
-      ...a,
-      spotifyImg: "",
-    }));
+      setGenreName(genre);
+      setGenreArtists(artists);
 
-    setGenreName(genre);
-    setGenreArtists(artists);
-
- 
-    setGenreModalOpen(true);
-  } catch (err) {
-    console.error(err);
-  }
-};
+      setGenreModalOpen(true);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     if (!showSplash) return;
@@ -66,6 +62,12 @@ const handleGenreSelect = async (genre: string) => {
     artistTracksLoading,
     artistAlbums,
     artistAlbumsLoading,
+    similarArtists,
+
+    similarTracks,
+
+    tagArtists,
+
     loading,
     error,
   } = useInsights();
@@ -143,6 +145,16 @@ const handleGenreSelect = async (genre: string) => {
                 isDark={isDark}
               />
             )}
+
+            <DiscoverySection
+              isDark={isDark}
+              selectedArtist={selectedArtist}
+              similarArtists={similarArtists}
+              similarTracks={similarTracks}
+              tagArtists={tagArtists}
+              setSelectedArtist={setSelectedArtist}
+              handleGenreSelect={handleGenreSelect}
+            />
           </>
         )}
       </main>
